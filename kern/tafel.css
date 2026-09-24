@@ -1,0 +1,90 @@
+/* Tafelbild-Gestaltung. Farben und Schriften zentral hier. */
+:root{
+  --ueberschrift:#2e74b5; --kopflinie:#5b9bd5; --kopftext:#44546a;
+  --text:#18232e; --linie:#c7d2dc; --hintergrund:#edf1f5; --aktiv:#245c89;
+  --schrift:Calibri,Carlito,"Segoe UI",Arial,sans-serif;
+  --serif:Cambria,Caladea,Georgia,serif;
+  --leiste:46px;
+}
+ab-blatt{display:none} /* bis der Motor geladen hat */
+*{box-sizing:border-box}
+body.tafel{margin:0;background:var(--hintergrund);color:var(--text);font-family:var(--schrift)}
+button{font:inherit;font-size:14px;border:1px solid #bac8d3;border-radius:7px;padding:5px 11px;background:#fff;color:#203950;cursor:pointer}
+button[aria-pressed=true]{background:var(--aktiv);color:#fff;border-color:var(--aktiv)}
+:focus-visible{outline:3px solid #dc9400;outline-offset:2px}
+
+/* Werkzeugleiste unten */
+.leiste{position:fixed;left:0;right:0;bottom:0;z-index:10;height:var(--leiste);display:flex;align-items:center;gap:14px;padding:0 12px;background:#fafdff;border-top:1px solid var(--linie);box-shadow:0 -2px 8px #24374520;overflow-x:auto}
+.gruppe{display:flex;gap:4px;flex:none}
+.zurueck{font-size:20px;text-decoration:none;color:var(--aktiv);padding:0 4px}
+.farbe{width:28px;height:28px;padding:4px;border-radius:50%;border:2px solid transparent;display:grid;place-items:center}
+.farbe span{width:16px;height:16px;border-radius:50%;background:var(--farbe)}
+.farbe[aria-pressed=true]{background:#fff;border-color:var(--farbe)}
+.status{margin-left:auto;font-size:13px;color:#536573;white-space:nowrap;max-width:14em;overflow:hidden;text-overflow:ellipsis}
+
+/* Bausteine */
+h1{font-family:var(--serif);font-weight:normal;margin:0}
+h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:0 0 6px}
+.panel{min-width:0}
+.flaeche{position:relative;width:100%;aspect-ratio:var(--v);background:#fff;overflow:hidden;container-type:inline-size}
+.flaeche>svg{position:absolute;inset:0;width:100%;height:100%}
+.tinte{z-index:2;pointer-events:none;fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+[data-modus=stift] .tinte,[data-modus=radierer] .tinte{pointer-events:auto;touch-action:none;cursor:crosshair}
+[data-modus=radierer] .tinte{cursor:cell}
+.versuch-bild{position:absolute;left:1%;top:4%;height:92%;object-fit:contain}
+.versuch-text{position:absolute;left:55%;right:2%;top:6%;font-size:2.15cqw;line-height:1.4}
+.bild{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.tabelle{position:absolute;inset:0;width:100%;height:100%;border-collapse:collapse;table-layout:fixed;font-size:2.1cqw}
+.tabelle th,.tabelle td{border-right:1px solid #222;border-bottom:1px solid #222;padding:0 1.2%;font-weight:normal;text-align:left}
+.tabelle th{width:25%}
+.tabelle tr>:last-child{border-right:0}.tabelle tr:last-child>*{border-bottom:0}
+.merksatz{border-left:5px solid var(--ueberschrift);background:#eef4fb;padding:.6em 1em;font-weight:600}
+.textblock{line-height:1.45}
+.bruch{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;font-family:var(--serif);font-style:italic;line-height:1.2}
+.bruch>:first-child{border-bottom:1px solid;padding-bottom:1px}
+
+/* Randspalte (Notizen, Simulation) */
+.rand{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--linie);padding-right:14px}
+.reiter{display:flex;gap:4px;margin:0 36px 8px 0;flex-wrap:wrap}
+.rand-zu{position:absolute;top:0;right:12px;padding:2px 9px}
+.rand-inhalt{flex:1;min-height:0;overflow:auto;border:1px solid var(--linie);border-radius:6px;background:#fff}
+
+.simulation{display:flex;flex-direction:column;height:100%}
+.simulation iframe{flex:1;border:0;min-height:300px}
+.simulation a{font-size:13px;padding:4px 8px}
+
+/* ---------- Tafelansicht: füllt den Bildschirm ---------- */
+.tafelansicht{height:100vh;overflow:hidden}
+.tafelansicht .bogen{height:calc(100vh - var(--leiste));display:flex;flex-direction:column;padding:6px 16px 8px;background:#fff}
+.tafelansicht .kopfzeile,.tafelansicht .fusszeile,.tafelansicht .nur-druck{display:none}
+.tafelansicht h1{font-family:var(--schrift);font-weight:700;font-size:17px;color:var(--kopftext);margin-bottom:6px}
+.tafelansicht h2{font-size:clamp(20px,2.6vh,30px)}
+.tafelansicht .buehne{flex:1;min-height:0;display:grid;grid-template-columns:minmax(240px,28%) 1fr;gap:18px}
+.tafelansicht.ohne-rand .buehne{grid-template-columns:34px 1fr}
+.tafelansicht.ohne-rand .rand>:not(.rand-zu){display:none}
+.tafelansicht.ohne-rand .rand-zu{right:0}
+.tafelansicht .module{min-height:0;overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;row-gap:16px}
+.tafelansicht .panel{width:var(--breite,min(100%,1100px));flex:none}
+
+/* ---------- Druckansicht: DIN A4 ---------- */
+.druckansicht .bogen{width:210mm;min-height:297mm;margin:22px auto calc(var(--leiste) + 22px);padding:12.7mm 12.7mm 12.7mm 20mm;background:#fff;box-shadow:0 3px 20px #24374520;display:flex;flex-direction:column}
+.druckansicht .rand,.druckansicht .nur-tafel{display:none}
+.druckansicht .kopfzeile{display:flex;justify-content:space-between;border-bottom:3px double var(--kopflinie);color:var(--kopftext);padding-bottom:5px;font-size:10pt;text-transform:uppercase}
+.druckansicht h1{font-size:24pt;margin:10px 0 12px}
+.druckansicht h2{font-size:14pt}
+.druckansicht .versuch-text{font-size:2.5cqw}
+.druckansicht .buehne{flex:1}
+.druckansicht .panel{width:var(--druckbreite,100%);margin-bottom:4mm;break-inside:avoid}
+.druckansicht .panel[hidden]{display:block}
+.druckansicht .fusszeile{border-top:2px solid var(--kopflinie);text-align:right;color:#4472a7;font-size:8pt;padding-top:2px}
+
+@media print{
+  @page{size:A4;margin:0}
+  body.tafel{background:#fff}
+  .leiste{display:none}
+  .druckansicht .bogen{margin:0;box-shadow:none;min-height:296mm}
+}
+@media (max-width:700px){
+  .tafelansicht .buehne{grid-template-columns:1fr}
+  .tafelansicht .rand{display:none}
+}

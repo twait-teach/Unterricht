@@ -1,0 +1,68 @@
+/* Portal-Gestaltung. Schulfarben des Gymnasiums Dorfen.
+   Farben/Schrift zentral hier ändern – gilt dann für das ganze Portal. */
+:root{
+  --blau:#0033b3; --blau-hell:#e8edfa;
+  --gruen:#37a600; --gruen-hell:#eaf5e0;
+  --rot:#cc0300;
+  --text:#1d2330; --text-leise:#5b6475;
+  --linie:#dde1e8; --flaeche:#f6f7f9; --weiss:#fff;
+  --schrift:"Segoe UI",Calibri,system-ui,-apple-system,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:5rem}
+body{margin:0;font:16px/1.5 var(--schrift);color:var(--text);background:var(--weiss)}
+a{color:inherit}
+:focus-visible{outline:3px solid #e2a200;outline-offset:2px}
+
+/* Kopf mit Klassenwahl */
+.kopf{position:sticky;top:0;z-index:5;background:var(--weiss);border-bottom:3px solid var(--blau)}
+.kopf-innen{max-width:1180px;margin:0 auto;padding:.7rem 1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
+.marke{font-weight:700;font-size:1.1rem;text-decoration:none;margin-right:auto}
+.marke span{font-weight:400;color:var(--blau);margin-left:.35rem}
+.klassen{display:flex;gap:1.2rem;flex-wrap:wrap}
+.fach{display:flex;align-items:center;gap:.2rem}
+.fach-name{font-size:.85rem;font-weight:600;color:var(--text-leise);margin-right:.3rem}
+.fach.aktiv .fach-name{color:var(--text)}
+.klassen a{min-width:2.4rem;text-align:center;padding:.35rem .9rem;border-radius:6px;text-decoration:none;font-weight:600;color:var(--blau)}
+.klassen a:hover{background:var(--blau-hell)}
+.klassen a[aria-current]{background:var(--blau);color:var(--weiss)}
+
+/* Zweispaltig: Kapitelbaum | Inhalt */
+.rahmen{max-width:1180px;margin:0 auto;padding:1.5rem;display:grid;grid-template-columns:290px 1fr;gap:2.5rem;align-items:start}
+.baum{position:sticky;top:4.5rem;max-height:calc(100vh - 5.5rem);overflow:auto;padding-right:.5rem}
+.teil{margin-bottom:1.3rem}
+.teil-name{font-size:.8rem;font-weight:700;color:var(--text-leise);margin:0 0 .3rem .5rem;white-space:pre}
+.thema{display:flex;gap:.55rem;padding:.35rem .5rem;border-radius:6px;text-decoration:none;font-size:.95rem;line-height:1.3;color:var(--text-leise)}
+.thema .nr{min-width:1.4em;text-align:right;font-variant-numeric:tabular-nums}
+.thema.hat-material{color:var(--text)}
+.thema.hat-material .nr{color:var(--gruen);font-weight:700}
+.thema:hover{background:var(--flaeche)}
+.thema[aria-current]{background:var(--blau);color:var(--weiss)}
+.thema[aria-current] .nr{color:var(--weiss)}
+
+/* Kapitelinhalt */
+.inhalt{min-width:0}
+.thema-kopf{border-left:6px solid var(--gruen);padding:.2rem 0 .2rem 1rem;margin-bottom:1.8rem}
+.thema-kopf .pfad{font-size:.85rem;color:var(--text-leise)}
+.thema-kopf h1{margin:.1rem 0 0;font-size:1.8rem;line-height:1.2}
+.abschnitt{margin-bottom:2.2rem}
+.abschnitt h2{font-size:1.2rem;color:var(--blau);border-bottom:2px solid var(--blau);padding-bottom:.25rem;margin:0 0 .8rem}
+.rolle{font-size:.85rem;font-weight:600;color:var(--text-leise);margin:1rem 0 .4rem}
+.materialien{list-style:none;margin:0;padding:0;display:grid;gap:.45rem}
+.karte{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1rem;border:1px solid var(--linie);border-radius:8px;text-decoration:none;background:var(--weiss)}
+a.karte:hover{border-color:var(--blau);background:var(--blau-hell)}
+.karte.offen{color:var(--text-leise);background:var(--flaeche)}
+.karte .titel{font-weight:500}
+.art{flex:none;font-size:.78rem;font-weight:600;padding:.1rem .55rem;border-radius:99px;background:var(--gruen-hell);color:#2a7d00}
+.art-tafelbild{background:var(--blau);color:var(--weiss)}
+.art-pptx{background:#fbe9e2;color:#a33b12}
+.art-docx{background:#e3ecfa;color:#1b4fa0}
+.art-link{background:var(--flaeche);color:var(--text-leise)}
+.offen .art{background:none;color:var(--text-leise);font-weight:400}
+.leer,.fehler{padding:1.2rem;border:1px dashed var(--linie);border-radius:8px;color:var(--text-leise)}
+.fehler{border-color:var(--rot);color:var(--rot)}
+
+@media (max-width:800px){
+  .rahmen{grid-template-columns:1fr;gap:1rem;padding:1rem}
+  .baum{position:static;max-height:none;border-bottom:1px solid var(--linie);padding-bottom:.5rem}
+}

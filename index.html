@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unterricht · Gymnasium Dorfen</title>
+<link rel="stylesheet" href="kern/portal.css">
+</head>
+<body>
+<header class="kopf">
+  <div class="kopf-innen">
+    <a class="marke" href="#">Gymnasium Dorfen <span id="fach">Unterricht</span></a>
+    <nav class="klassen" id="klassen" aria-label="Fach und Klasse wählen"></nav>
+  </div>
+</header>
+
+<div class="rahmen">
+  <nav class="baum" id="baum" aria-label="Kapitel"></nav>
+  <main id="inhalt" class="inhalt" aria-live="polite"></main>
+</div>
+
+<!-- Das Gerüst enthält keine Inhalte. Klassen, Kapitel und Materialien
+     stehen in faecher.js, mathematik/… und physik/…  – siehe BAUPLAN.md -->
+<script src="kern/portal.js"></script>
+<script src="faecher.js"></script>
+</body>
+</html>
