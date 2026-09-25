@@ -5,7 +5,7 @@
 Portal.klasse({
   teile: [
     { id: 'A', name: 'Statische elektrische und magnetische Felder', themen: [
-      { nr: 1, name: 'Elektrisches Feld, Feldlinien und Superposition' },
+      { nr: 1, name: 'Elektrisches Feld, Feldlinien und Superposition', ordner: '01-elektrisches-feld' },
       { nr: 2, name: 'Kondensator: Kapazität, Auf- und Entladen' },
       { nr: 3, name: 'Potential und Spannung' },
       { nr: 4, name: 'Geladene Teilchen im elektrischen Feld' },
