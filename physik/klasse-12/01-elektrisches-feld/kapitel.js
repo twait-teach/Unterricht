@@ -5,6 +5,7 @@ Portal.kapitel({
   abschnitte: [
     { titel: '1.2 Die elektrische Feldstärke', materialien: [
       { titel: 'Die elektrische Feldstärke', rolle: 'hefteintrag', typ: 'tafelbild', datei: 'feldstaerke.html' },
+      { titel: 'Die elektrische Feldstärke – Musterlösung', rolle: 'loesung', typ: 'tafelbild', datei: 'feldstaerke.html?loesung' },
     ]},
   ],
 });
