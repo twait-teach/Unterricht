@@ -86,7 +86,7 @@ Pfade `../../../kern/…` ggf. an die Ordnertiefe anpassen.
 Für alle Bausteine: `titel`, `phase="1 2"` (in welchen Unterrichtsphasen sichtbar; ohne = immer),
 `druckbreite="150mm"`, `druck-titel="nein"`, `nur="tafel"` bzw. `nur="druck"`, `id` (fester Name der Schreibfläche).
 Randnotizen sind standardmäßig zu (Knopf „Notizen“ in der Leiste) und liegen aufgeklappt über dem Blatt – das Blatt verschiebt sich nie. Die Leiste hat zwei Zeilen. Textblöcke haben in jeder Phase dieselbe Breite (kein Springen); nur Schreibflächen werden in die Resthöhe eingepasst.
-Zusätzlich: `tafel-titel="nein"` (Titel nur im Druck); am `<ab-blatt>`: `oben` (Bausteine oben statt mittig – Text springt beim Phasenwechsel nicht). Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
+Zusätzlich: `tafel-titel="nein"` (Titel nur im Druck); `oben` am `<ab-blatt>` ist überflüssig (alles steht immer oben links). Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
 `verhaeltnis` = Breite : Höhe (nur noch für Bilder/Versuch/Tabelle; Karo und Streifen rechnen in Kästchen). Brüche: `<span class="bruch"><span>F</span><span>q</span></span>`.
 
 **Wichtig:** Wird ein Baustein umbenannt, geht die gespeicherte Handschrift darauf verloren,
@@ -97,7 +97,8 @@ weil die Schreibfläche am Titel erkannt wird. Wer das vermeiden will, vergibt e
 - **Ein Kästchenmaß pro Blatt:** Jede Karo-/Streifenfläche ist 35 Kästchen breit (Druck: 175 mm = 5 mm je Kästchen) und immer eine ganze Zahl Zeilen hoch.
   Die Kästchengröße (ganze Pixel) ist in allen Phasen und Blöcken gleich; sie wird so gewählt, dass die höchste Phase noch ohne Scrollen passt.
   Restplatz der aktuellen Phase geht als zusätzliche Zeilen an die letzte Karofläche. `zeilen` ist die **Mindesthöhe**. Dünne, einheitliche Linien – keine Verstärkung alle 5 Kästchen.
-- **Schrift:** Basisgröße `--s` (Höhe des Bildschirms); Text = 1 · `--s`, Zwischentitel = 1,3 · `--s`, Blattüberschrift = 1,6 · `--s`. Nie einzeln festlegen.
+- **Feste Folie:** Die Tafelansicht ist eine feste Folie von 1600 × 900 Einheiten (16:9), die als Ganzes auf den Bildschirm skaliert wird (oben links, Überschrift gehört dazu). Dadurch ist die Anordnung auf Surface, ThinkPad und Desktop identisch und entspricht Druck und Musterlösung. Übrig bleibt freier Platz rechts/unten (Surface im Vollbild: fast keiner; Fenster mit Browserleiste ca. 13 % frei rechts). Empfehlung: Surface im Vollbild (Knopf „Vollbild“). Die Werkzeugleiste zeigt einen Stempel (Motor-Version, Fenstergröße, Skalierung) zur Fehlersuche.
+- **Schrift:** Basisgröße `--s` = 44 Folienpixel; Zwischentitel = 1,15 · `--s`, Blattüberschrift = 1,45 · `--s`. Nie einzeln festlegen.
 - **Breite:** Textblöcke immer volle Breite (keine feste Höchstbreite); Schreibflächen so breit wie das Raster. Brüche im Fließtext werden verkleinert (`.textblock .bruch`).
 - **Handschrift-Koordinaten** hängen an der Breite (1000 Einheiten); Höhenänderungen verschieben nichts. Beim Ändern von Mindesthöhen darauf achten, dass alte Musterlösungen nicht abgeschnitten werden (Feldstärke-Diagramm: mindestens 15 Zeilen).
 - **Prüfen vor dem Abgeben:** `python werkzeuge/tafel-pruefen.py <blatt.html> [--bilder]` (Playwright/Chromium nötig) misst je Bildschirmgröße (u. a. Surface Pro 7: 1368×912 und 1368×760) und Phase: kein Scrollen, Überschrift größer als Text, gleich große ganze Kästchen, Druck = eine A4-Seite.

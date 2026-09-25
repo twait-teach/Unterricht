@@ -10,6 +10,8 @@
 { if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
+  const MOTOR = 'Motor 25.09.-5';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
   const src = document.currentScript.getAttribute('src');
@@ -40,28 +42,37 @@
   }
   function setzeVerhaeltnis(f, v) {
     f.verhaeltnis = v;
-    f.hoehe = 1000 / v;
+    f.einheiten = f.einheiten || 1000;   // Koordinatenbreite: 1000, bei Karoflächen Spalten · Kästchenmaß
+    f.hoehe = f.einheiten / v;
     f.el.style.setProperty('--v', v);
-    f.svg.setAttribute('viewBox', '0 0 1000 ' + f.hoehe);
+    f.svg.setAttribute('viewBox', '0 0 ' + f.einheiten + ' ' + f.hoehe);
   }
 
-  function setzeZeilen(f, z) { f.zeilen = z; setzeVerhaeltnis(f, SPALTEN / z); f.zeichneRaster(); }
+  // Karofläche auf sp Spalten × z Zeilen setzen. Handschrift-Koordinaten zählen ab links oben in Kästchen
+  // (1 Kästchen = 1000/SPALTEN Einheiten): wird das Blatt breiter, kommen rechts Kästchen dazu, nichts verschiebt sich.
+  function setzeZeilen(f, z, sp = f.spalten) {
+    f.zeilen = z; f.spalten = sp; f.einheiten = sp * 1000 / SPALTEN;
+    setzeVerhaeltnis(f, sp / z); f.zeichneRaster();
+  }
 
   // Schreibfläche aus ganzen Kästchen: Breite = SPALTEN Kästchen, Höhe = ganze Zeilen. Das Gitter wird aus
   // f.zeilen gezeichnet und deshalb bei jeder Höhenänderung neu erzeugt. Kästchen bleiben so überall gleich groß.
   function rasterFlaeche(q, zeilen, inhalt) {
     const f = neueFlaeche(q, SPALTEN / zeilen);
-    f.raster = true; f.min = zeilen; f.zeilen = zeilen;
+    f.raster = true; f.min = zeilen; f.zeilen = zeilen; f.spalten = SPALTEN; f.einheiten = 1000;
     f.druckZeilen = Math.max(zeilen, Math.round(zahl(q.getAttribute('zeilen-druck'), zeilen)));
     const svg = document.createElementNS(NS, 'svg');
-    svg.classList.add('raster'); svg.setAttribute('shape-rendering', 'crispEdges');
-    const id = 'raster-' + f.id, u = 1000 / SPALTEN;
+    svg.classList.add('raster');
+    const u = 1000 / SPALTEN;   // Kästchen in Koordinateneinheiten
+    // Gitter aus einfachen Linien (kein Muster, keine Sondereffekte – das lief nicht in jedem Browser)
     f.zeichneRaster = () => {
-      const H = f.zeilen * u;
-      svg.setAttribute('viewBox', '0 0 1000 ' + H);
-      svg.innerHTML = `<defs><pattern id="${id}" width="${u}" height="${u}" patternUnits="userSpaceOnUse"><path d="M${u} 0H0V${u}" fill="none" stroke="#b9c4ce" stroke-width="1" vector-effect="non-scaling-stroke"/></pattern></defs>
-        <rect width="1000" height="${H}" fill="url(#${id})"/>${inhalt ? inhalt(u, H) : ''}
-        <rect x=".5" y=".5" width="999" height="${H - 1}" fill="none" stroke="#8e9ca9" vector-effect="non-scaling-stroke"/>`;
+      const B = f.spalten * u, H = f.zeilen * u;
+      let d = '';
+      for (let i = 1; i < f.spalten; i++) d += `M${i * u} 0V${H}`;
+      for (let j = 1; j < f.zeilen; j++) d += `M0 ${j * u}H${B}`;
+      svg.setAttribute('viewBox', `0 0 ${B} ${H}`);
+      svg.innerHTML = `<path d="${d}" fill="none" stroke="#b4c0cb" stroke-width="${u * .035}"/>${inhalt ? inhalt(u, H, f.spalten) : ''}
+        <rect x="${u * .02}" y="${u * .02}" width="${B - u * .04}" height="${H - u * .04}" fill="none" stroke="#8e9ca9" stroke-width="${u * .05}"/>`;
     };
     f.zeichneRaster();
     f.el.prepend(svg);
@@ -125,14 +136,15 @@
       const teile = Math.max(1, Math.round(zahl(q.getAttribute('teile'), 4)));
       const balken = Math.max(1, Math.round(zahl(q.getAttribute('balken'), 2)));
       const links = 18, tw = Math.max(1, Math.floor((links - 2) / teile));   // Teilbreite in Kästchen
-      return rasterFlaeche(q, 5 * balken + 2, u => {
+      return rasterFlaeche(q, 5 * balken + 2, (u, H) => {
         let s = '';
+        const dick = u * .08;
         for (let b = 0; b < balken; b++) {
           const y = (2 + 5 * b) * u, h = 3 * u, x = u, w = tw * teile * u;
-          s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="#222" stroke-width="2.2" vector-effect="non-scaling-stroke"/>`;
-          for (let i = 1; i < teile; i++) s += `<path d="M${x + i * tw * u} ${y}V${y + h}" stroke="#222" stroke-width="2.2" vector-effect="non-scaling-stroke"/>`;
+          s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="#222" stroke-width="${dick}"/>`;
+          for (let i = 1; i < teile; i++) s += `<path d="M${x + i * tw * u} ${y}V${y + h}" stroke="#222" stroke-width="${dick}"/>`;
         }
-        return s + `<path d="M${links * u} 0V100000" stroke="#8e9ca9" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`;
+        return s + `<path d="M${links * u} 0V${H}" stroke="#8e9ca9" stroke-width="${u * .06}"/>`;
       });
     },
     merksatz: q => ({ el: el('div', 'merksatz', q.innerHTML) }),
@@ -195,7 +207,8 @@
 
   const randZu = knopf('×', 'Randspalte ein-/ausblenden', 'rand-zu');
   rand.append(randZu, reiter, ...raender.map(r => r[1]));
-  buehne.append(rand, module);
+  buehne.append(module);
+  document.body.append(rand);   // Randnotizen liegen außerhalb der skalierten Folie über dem Bildschirm
   const fuss = el('footer', 'fusszeile', blatt.getAttribute('fuss') || '');
   bogen.append(kopf, h1, buehne, fuss);
 
@@ -216,12 +229,12 @@
   const bLoesung = knopf('Musterlösung', 'Musterlösung ein-/ausblenden'), bSichern = knopf('Als Musterlösung sichern', 'Aktuelle Handschrift als Musterlösung speichern (ersetzt die vorhandene)');
   bLoesung.disabled = true; bLoesung.title = 'Noch keine Musterlösung gespeichert';
   const bVoll = knopf('Vollbild'), bDrucken = knopf('Drucken'), bNotizen = knopf('Notizen', 'Randnotizen ein-/ausblenden (liegen über dem Blatt)');
-  const status = el('span', 'status');
+  const status = el('span', 'status'); const stempel = el('span', 'stempel', MOTOR);
   // Zwei Zeilen: oben Phasen, Notizen, Musterlösung – unten Ansicht, Werkzeuge, Farben, Vollbild/Drucken
   const zeile = (...k) => { const z = el('div', 'zeile'); z.append(...k); return z; };
   leiste.append(
     zeile(zurueck, ...(phasenKnoepfe.length ? [gruppe(...phasenKnoepfe)] : []), gruppe(bNotizen), gruppe(bLoesung, bSichern)),
-    zeile(gruppe(bTafel, bDruck), gruppe(bBedienen, bStift, bRadierer, bZurueck, bLeeren), gruppe(...farbKnoepfe), gruppe(bVoll, bDrucken), status));
+    zeile(gruppe(bTafel, bDruck), gruppe(bBedienen, bStift, bRadierer, bZurueck, bLeeren), gruppe(...farbKnoepfe), gruppe(bVoll, bDrucken), status, stempel));
 
   if (blatt.hasAttribute('oben')) document.body.classList.add('oben');   // Bausteine oben ausrichten statt mittig
   blatt.replaceWith(bogen);
@@ -443,7 +456,7 @@
     const raster = flaechen.filter(f => f.raster);
     for (const p of panels) p.style.removeProperty('--breite');
     if (!tafel || !phasen.length) {
-      for (const f of raster) { setzeZeilen(f, tafel ? f.min : f.druckZeilen); zeichne(f); }
+      for (const f of raster) { setzeZeilen(f, tafel ? f.min : f.druckZeilen, SPALTEN); zeichne(f); }
       return;
     }
     const gap = parseFloat(getComputedStyle(module).rowGap) || 0;
@@ -455,9 +468,9 @@
       let fest = gap * Math.max(0, ps.length - 1), feste = 0, rasterZ = 0;
       for (const p of ps) {
         if (p.flaeche) {
-          const t = p.querySelector('h2'); fest += t ? t.getBoundingClientRect().height + 6 : 0;
+          const t = p.querySelector('h2'); fest += t ? t.offsetHeight + 6 : 0;
           if (p.flaeche.raster) rasterZ += p.flaeche.min; else feste += SPALTEN / p.flaeche.verhaeltnis;
-        } else fest += p.getBoundingClientRect().height;
+        } else fest += p.offsetHeight;
       }
       return { ps, fest, feste, rasterZ };
     };
@@ -466,19 +479,32 @@
     let c = Math.floor(W / SPALTEN);
     for (const [, d] of daten) if (d.feste + d.rasterZ) c = Math.min(c, Math.floor((H - d.fest) / (d.feste + d.rasterZ)));
     c = Math.max(8, c);
-    for (const p of panels) if (p.flaeche) p.style.setProperty('--breite', SPALTEN * c + 'px');
-    for (const f of raster) setzeZeilen(f, f.min);
+    // Karoflächen: so viele ganze Kästchen nebeneinander, wie in die Breite passen (mindestens SPALTEN)
+    const spalten = SPALTEN;   // Folie ist fest: immer genau SPALTEN Kästchen breit, wie im Druck
+    for (const p of panels) if (p.flaeche) p.style.setProperty('--breite', (p.flaeche.raster ? spalten : SPALTEN) * c + 'px');
+    for (const f of raster) setzeZeilen(f, f.min, spalten);
     const d = daten.find(x => x[0] === phase)?.[1];
     const letzte = d?.ps.filter(p => p.flaeche?.raster).at(-1);
-    if (letzte) { const rest = Math.floor((H - d.fest - (d.feste + d.rasterZ) * c) / c); if (rest > 0) setzeZeilen(letzte.flaeche, letzte.flaeche.min + rest); }
+    if (letzte) { const rest = Math.floor((H - d.fest - (d.feste + d.rasterZ) * c) / c); if (rest > 0) setzeZeilen(letzte.flaeche, letzte.flaeche.min + rest, spalten); }
     raster.forEach(zeichne);
   }
   document.fonts?.ready.then(() => requestAnimationFrame(einpassen));
   new ResizeObserver(() => requestAnimationFrame(einpassen)).observe(module);
 
+  // Folie skalieren: k passt die feste Folie (FB × FH) in den Bereich über der Leiste. Links oben ausgerichtet,
+  // Restfläche rechts bzw. unten bleibt frei. Der Stempel zeigt Version, Fenstergröße und Maßstab.
+  function skaliere() {
+    const k = Math.min(innerWidth / FB, (innerHeight - leiste.offsetHeight) / FH);
+    document.body.style.setProperty('--k', k);
+    stempel.textContent = MOTOR + ' · ' + innerWidth + '×' + innerHeight + ' · ' + Math.round(k * 100) + ' %';
+    stempel.title = 'Motorversion · Fenstergröße · Maßstab der Folie';
+  }
+  addEventListener('resize', skaliere);
+
   // Start
   document.title = (blatt.getAttribute('titel') || 'Tafelbild') + ' · Tafelbild';
   setzeModus('bedienen');
+  skaliere();
   setzeAnsicht(false);
   if (phasen.length) setzePhase(phasen[0]);
   melde(hatStriche(eigen) ? 'Sitzung wiederhergestellt' : 'Leeres Blatt');

@@ -21,6 +21,7 @@ button[aria-pressed=true]{background:var(--aktiv);color:#fff;border-color:var(--
 .farbe{width:28px;height:28px;padding:4px;border-radius:50%;border:2px solid transparent;display:grid;place-items:center}
 .farbe span{width:16px;height:16px;border-radius:50%;background:var(--farbe)}
 .farbe[aria-pressed=true]{background:#fff;border-color:var(--farbe)}
+.stempel{font-size:12px;color:#8a97a3;white-space:nowrap}
 .status{margin-left:auto;font-size:13px;color:#536573;white-space:nowrap;max-width:14em;overflow:hidden;text-overflow:ellipsis}
 
 /* Bausteine */
@@ -58,17 +59,17 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 .simulation a{font-size:13px;padding:4px 8px}
 
 /* ---------- Tafelansicht: füllt den Bildschirm ---------- */
-.tafelansicht{height:100vh;overflow:hidden;--s:clamp(20px,3.6vh,40px)}   /* Basisschrift; Überschriften leiten sich daraus ab */
-.tafelansicht .bogen{height:calc(100vh - var(--leiste));display:flex;flex-direction:column;padding:6px 16px 8px;background:#fff}
+.tafelansicht{height:100vh;overflow:hidden;--s:44px}   /* Basisschrift in Folienpixeln (Folie 1600 × 900); Überschriften leiten sich daraus ab */
+/* Feste Folie, links oben, als Ganzes skaliert (--k setzt der Motor) */
+.tafelansicht .bogen{position:absolute;left:0;top:0;width:1600px;height:900px;transform:scale(var(--k,1));transform-origin:0 0;display:flex;flex-direction:column;padding:18px 24px 14px;background:#fff;overflow:hidden}
 .tafelansicht .kopfzeile,.tafelansicht .fusszeile,.tafelansicht .nur-druck{display:none}
-.tafelansicht h1{font-family:var(--schrift);font-weight:700;font-size:calc(var(--s) * 1.6);color:var(--kopftext);margin-bottom:8px}
-.tafelansicht h2{font-size:calc(var(--s) * 1.3)}
+.tafelansicht h1{font-family:var(--schrift);font-weight:700;font-size:calc(var(--s) * 1.45);color:var(--kopftext);margin-bottom:6px}
+.tafelansicht h2{font-size:calc(var(--s) * 1.15)}
 .tafelansicht .buehne{flex:1;min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr)}
 /* Randnotizen: zu, bis sie aufgeklappt werden; dann liegen sie über dem Blatt (nichts verschiebt sich) */
 .tafelansicht .rand{display:none;position:fixed;left:0;top:0;bottom:var(--leiste);width:min(440px,92vw);z-index:8;background:#fff;padding:12px;border-right:1px solid var(--linie);box-shadow:4px 0 18px #24374533}
 .tafelansicht.notizen-offen .rand{display:flex}
-.tafelansicht .module{min-height:0;overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;row-gap:16px}
-.tafelansicht.oben .module{justify-content:flex-start;align-items:flex-start}
+.tafelansicht .module{min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;row-gap:16px}
 .tafelansicht .panel{width:var(--breite,100%);flex:none}
 
 /* ---------- Druckansicht: DIN A4 ---------- */
