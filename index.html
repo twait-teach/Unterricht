@@ -22,6 +22,7 @@
 <!-- Das Gerüst enthält keine Inhalte. Klassen, Kapitel und Materialien
      stehen in faecher.js, mathematik/… und physik/…  – siehe BAUPLAN.md -->
 <script src="kern/portal.js"></script>
-<script src="faecher.js"></script>
+<script>// faecher.js immer frisch laden, damit neue Klassen sofort sichtbar sind
+  document.write('<script src="faecher.js?v=' + Date.now() + '"><\/script>');</script>
 </body>
 </html>
