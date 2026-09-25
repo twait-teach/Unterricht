@@ -61,7 +61,8 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 /* ---------- Tafelansicht: füllt den Bildschirm ---------- */
 .tafelansicht{height:100vh;overflow:hidden;--s:44px}   /* Basisschrift in Folienpixeln (Folie 1600 × 900); Überschriften leiten sich daraus ab */
 /* Feste Folie, links oben, als Ganzes skaliert (--k setzt der Motor) */
-.tafelansicht .bogen{position:absolute;left:0;top:0;width:1600px;height:900px;transform:scale(var(--k,1));transform-origin:0 0;display:flex;flex-direction:column;padding:18px 24px 14px;background:#fff;overflow:hidden}
+.tafelansicht .bogen{position:absolute;left:var(--x,0px);top:0;width:1600px;height:900px;transform:scale(var(--k,1));transform-origin:0 0;box-shadow:0 0 0 1px #d5dde5;display:flex;flex-direction:column;padding:18px 24px 14px;background:#fff;overflow:hidden}
+.tafelansicht.ohne-titel h1{display:none}
 .tafelansicht .kopfzeile,.tafelansicht .fusszeile,.tafelansicht .nur-druck{display:none}
 .tafelansicht h1{font-family:var(--schrift);font-weight:700;font-size:calc(var(--s) * 1.45);color:var(--kopftext);margin-bottom:6px}
 .tafelansicht h2{font-size:calc(var(--s) * 1.15)}

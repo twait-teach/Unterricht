@@ -86,7 +86,7 @@ Pfade `../../../kern/…` ggf. an die Ordnertiefe anpassen.
 Für alle Bausteine: `titel`, `phase="1 2"` (in welchen Unterrichtsphasen sichtbar; ohne = immer),
 `druckbreite="150mm"`, `druck-titel="nein"`, `nur="tafel"` bzw. `nur="druck"`, `id` (fester Name der Schreibfläche).
 Randnotizen sind standardmäßig zu (Knopf „Notizen“ in der Leiste) und liegen aufgeklappt über dem Blatt – das Blatt verschiebt sich nie. Die Leiste hat zwei Zeilen. Textblöcke haben in jeder Phase dieselbe Breite (kein Springen); nur Schreibflächen werden in die Resthöhe eingepasst.
-Zusätzlich: `tafel-titel="nein"` (Titel nur im Druck); `oben` am `<ab-blatt>` ist überflüssig (alles steht immer oben links). Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
+Zusätzlich: `tafel-titel="nein"` (Titel nur im Druck); `oben` am `<ab-blatt>` ist überflüssig (alles steht immer oben). Bild-/Tabellen-/Versuchsblöcke: `breite="60"` (in % der Blattbreite; Handschrift skaliert mit) macht sie kleiner und spart Höhe, sodass die Kästchen größer werden. Am `<ab-blatt>`: `titel-aus="3"` blendet die Blattüberschrift ab Phase 3 aus (nur Tafelansicht); der Platz kommt dem Inhalt zugute und die Kästchen können größer werden. Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
 `verhaeltnis` = Breite : Höhe (nur noch für Bilder/Versuch/Tabelle; Karo und Streifen rechnen in Kästchen). Brüche: `<span class="bruch"><span>F</span><span>q</span></span>`.
 
 **Wichtig:** Wird ein Baustein umbenannt, geht die gespeicherte Handschrift darauf verloren,

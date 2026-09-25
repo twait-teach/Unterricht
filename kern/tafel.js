@@ -10,7 +10,7 @@
 { if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
-  const MOTOR = 'Motor 25.09.-5';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const MOTOR = 'Motor 25.09.-8';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
   const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
@@ -198,6 +198,7 @@
     if (q.getAttribute('nur')) panel.classList.add('nur-' + q.getAttribute('nur'));
     if (q.getAttribute('druckbreite')) panel.style.setProperty('--druckbreite', q.getAttribute('druckbreite'));
     else if (teil.raster) panel.style.setProperty('--druckbreite', '175mm');   // 35 Kästchen à 5 mm
+    panel.anteil = Math.min(1, Math.max(.2, parseFloat(q.getAttribute('breite')) / 100 || 1));   // Breite in % der Blattbreite (nur Bild-/Tabellenblöcke)
     panel.phasen = (q.getAttribute('phase') || '').split(/[\s,]+/).filter(Boolean);
     panel.flaeche = teil.svg ? teil : null;
     panels.push(panel);
@@ -438,9 +439,13 @@
   randZu.onclick = () => setzeNotizen(false);
   setzeNotizen(false);
 
+  // Überschrift ausblenden ab Phase N (Attribut titel-aus am ab-blatt): der Platz kommt dem Inhalt zugute
+  const titelAus = parseFloat(blatt.getAttribute('titel-aus')) || Infinity;
+  const titelWeg = ph => Number(ph) >= titelAus;
+  const zeigeTitel = ph => document.body.classList.toggle('ohne-titel', titelWeg(ph));
   let phase = null;
   function setzePhase(p) {
-    beende(); phase = p;
+    beende(); phase = p; zeigeTitel(p);
     for (const panel of panels) panel.hidden = panel.phasen.length > 0 && !panel.phasen.includes(p);
     druecke(phasenKnoepfe, phasenKnoepfe.find(b => b.phase === p));
     requestAnimationFrame(einpassen);
@@ -460,42 +465,45 @@
       return;
     }
     const gap = parseFloat(getComputedStyle(module).rowGap) || 0;
-    const W = module.clientWidth, H = module.clientHeight;
+    const W = module.clientWidth, vorPhase = phase;
     const vorher = panels.map(p => p.hidden);
     const messe = ph => {
       const ps = panels.filter(p => !p.classList.contains('nur-druck') && (!p.phasen.length || p.phasen.includes(ph)));
       panels.forEach(p => { p.hidden = !ps.includes(p); });
+      zeigeTitel(ph); const Hp = module.clientHeight;
       let fest = gap * Math.max(0, ps.length - 1), feste = 0, rasterZ = 0;
       for (const p of ps) {
         if (p.flaeche) {
           const t = p.querySelector('h2'); fest += t ? t.offsetHeight + 6 : 0;
-          if (p.flaeche.raster) rasterZ += p.flaeche.min; else feste += SPALTEN / p.flaeche.verhaeltnis;
+          if (p.flaeche.raster) rasterZ += p.flaeche.min; else feste += p.anteil * SPALTEN / p.flaeche.verhaeltnis;
         } else fest += p.offsetHeight;
       }
-      return { ps, fest, feste, rasterZ };
+      return { ps, fest, feste, rasterZ, H: Hp };
     };
     const daten = phasen.map(ph => [ph, messe(ph)]);
     panels.forEach((p, i) => { p.hidden = vorher[i]; });
+    zeigeTitel(vorPhase);
     let c = Math.floor(W / SPALTEN);
-    for (const [, d] of daten) if (d.feste + d.rasterZ) c = Math.min(c, Math.floor((H - d.fest) / (d.feste + d.rasterZ)));
+    for (const [, d] of daten) if (d.feste + d.rasterZ) c = Math.min(c, Math.floor((d.H - d.fest) / (d.feste + d.rasterZ)));
     c = Math.max(8, c);
     // Karoflächen: so viele ganze Kästchen nebeneinander, wie in die Breite passen (mindestens SPALTEN)
     const spalten = SPALTEN;   // Folie ist fest: immer genau SPALTEN Kästchen breit, wie im Druck
-    for (const p of panels) if (p.flaeche) p.style.setProperty('--breite', (p.flaeche.raster ? spalten : SPALTEN) * c + 'px');
+    for (const p of panels) if (p.flaeche) p.style.setProperty('--breite', (p.flaeche.raster ? spalten : SPALTEN * p.anteil) * c + 'px');
     for (const f of raster) setzeZeilen(f, f.min, spalten);
     const d = daten.find(x => x[0] === phase)?.[1];
     const letzte = d?.ps.filter(p => p.flaeche?.raster).at(-1);
-    if (letzte) { const rest = Math.floor((H - d.fest - (d.feste + d.rasterZ) * c) / c); if (rest > 0) setzeZeilen(letzte.flaeche, letzte.flaeche.min + rest, spalten); }
+    if (letzte) { const rest = Math.floor((d.H - d.fest - (d.feste + d.rasterZ) * c) / c); if (rest > 0) setzeZeilen(letzte.flaeche, letzte.flaeche.min + rest, spalten); }
     raster.forEach(zeichne);
   }
   document.fonts?.ready.then(() => requestAnimationFrame(einpassen));
   new ResizeObserver(() => requestAnimationFrame(einpassen)).observe(module);
 
-  // Folie skalieren: k passt die feste Folie (FB × FH) in den Bereich über der Leiste. Links oben ausgerichtet,
-  // Restfläche rechts bzw. unten bleibt frei. Der Stempel zeigt Version, Fenstergröße und Maßstab.
+  // Folie skalieren: k passt die feste Folie (FB × FH) in den Bereich über der Leiste. Waagerecht mittig, oben
+  // ausgerichtet; Restfläche seitlich (grau) bzw. unten bleibt frei. Der Stempel zeigt Version, Fenstergröße und Maßstab.
   function skaliere() {
     const k = Math.min(innerWidth / FB, (innerHeight - leiste.offsetHeight) / FH);
     document.body.style.setProperty('--k', k);
+    document.body.style.setProperty('--x', Math.max(0, (innerWidth - FB * k) / 2) + 'px');   // Folie waagerecht mittig, grauer Rand beidseitig
     stempel.textContent = MOTOR + ' · ' + innerWidth + '×' + innerHeight + ' · ' + Math.round(k * 100) + ' %';
     stempel.title = 'Motorversion · Fenstergröße · Maßstab der Folie';
   }
