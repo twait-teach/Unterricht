@@ -78,12 +78,14 @@ Pfade `../../../kern/…` ggf. an die Ordnertiefe anpassen.
 | `<ab-tabelle>` | `spalten="4"`, darin `<ab-zeile>…</ab-zeile>` | Wertetabelle |
 | `<ab-karo>` | `verhaeltnis="2"`, `kaestchen="40"` | Karofeld / Diagramm |
 | `<ab-linien>` | `verhaeltnis="3"`, `abstand="55"` | Schreiblinien |
+| `<ab-streifen>` | `teile="4"`, `balken="2"`, `karo="nein"`, `verhaeltnis="2.3"` | Balkenmodelle: leere, geteilte Streifen (Beschriften/Ausmalen von Hand) + Karofeld daneben |
 | `<ab-merksatz>` | – | hervorgehobener Merksatz |
 | `<ab-text>` | – | Fließtext |
 | `<ab-simulation>` | `url`, `titel` | Reiter in der Randspalte |
 
 Für alle Bausteine: `titel`, `phase="1 2"` (in welchen Unterrichtsphasen sichtbar; ohne = immer),
 `druckbreite="150mm"`, `druck-titel="nein"`, `nur="tafel"` bzw. `nur="druck"`, `id` (fester Name der Schreibfläche).
+Zusätzlich: `gross` (größere Schrift bei `ab-text`/`ab-merksatz` in der Tafelansicht); am `<ab-blatt>`: `oben` (Bausteine oben statt mittig – Text springt beim Phasenwechsel nicht). Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
 `verhaeltnis` = Breite : Höhe. Brüche: `<span class="bruch"><span>F</span><span>q</span></span>`.
 
 **Wichtig:** Wird ein Baustein umbenannt, geht die gespeicherte Handschrift darauf verloren,

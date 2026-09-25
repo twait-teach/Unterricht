@@ -101,6 +101,34 @@
       f.el.prepend(svg);
       return f;
     },
+    // Balkenmodelle: leere, in gleiche Teile geteilte Streifen (links) + Karofeld für Rechnungen (rechts).
+    // <ab-streifen teile="4" balken="2" karo="rechts|nein" verhaeltnis="2">  – ausgemalt/beschriftet wird von Hand.
+    streifen(q) {
+      const teile = Math.max(1, Math.round(zahl(q.getAttribute('teile'), 4)));
+      const balken = Math.max(1, Math.round(zahl(q.getAttribute('balken'), 2)));
+      const mitKaro = q.getAttribute('karo') !== 'nein';
+      const f = neueFlaeche(q, zahl(q.getAttribute('verhaeltnis'), 2));
+      const H = f.hoehe, breite = mitKaro ? 480 : 1000, x0 = 24, bw = breite - 2 * x0, tw = bw / teile;
+      const slot = H / balken, bh = Math.min(90, slot * 0.34), k = 25, id = 'streifen-' + f.id;
+      let s = '';
+      if (mitKaro) {
+        const kx = 500, kw = 1000 - kx;
+        s += `<defs><pattern id="${id}-k" x="${kx}" y="0" width="${k}" height="${k}" patternUnits="userSpaceOnUse"><path d="M${k} 0H0V${k}" fill="none" stroke="#bac4cd" stroke-width="1"/></pattern>
+          <pattern id="${id}-g" x="${kx}" y="0" width="${5 * k}" height="${5 * k}" patternUnits="userSpaceOnUse"><rect width="${5 * k}" height="${5 * k}" fill="url(#${id}-k)"/><path d="M${5 * k} 0H0V${5 * k}" fill="none" stroke="#8e9ca9" stroke-width="1.3"/></pattern></defs>
+          <rect x="${kx + .5}" y=".5" width="${kw - 1}" height="${H - 1}" fill="url(#${id}-g)" stroke="#8e9ca9"/>`;
+      }
+      for (let b = 0; b < balken; b++) {
+        const y = slot * b + (slot - bh) / 2;
+        s += `<rect x="${x0}" y="${y}" width="${bw}" height="${bh}" fill="#fff" stroke="#222" stroke-width="2.5"/>`;
+        for (let i = 1; i < teile; i++) s += `<path d="M${x0 + i * tw} ${y}V${y + bh}" stroke="#222" stroke-width="2.5"/>`;
+      }
+      const svg = document.createElementNS(NS, 'svg');
+      svg.classList.add('raster');
+      svg.setAttribute('viewBox', '0 0 1000 ' + H);
+      svg.innerHTML = s;
+      f.el.prepend(svg);
+      return f;
+    },
     merksatz: q => ({ el: el('div', 'merksatz', q.innerHTML) }),
     text: q => ({ el: el('div', 'textblock', q.innerHTML) }),
   };
@@ -149,6 +177,7 @@
     }
     panel.append(teil.el);
     if (q.getAttribute('nur')) panel.classList.add('nur-' + q.getAttribute('nur'));
+    if (q.hasAttribute('gross')) panel.classList.add('gross');   // größere Schrift in der Tafelansicht
     if (q.getAttribute('druckbreite')) panel.style.setProperty('--druckbreite', q.getAttribute('druckbreite'));
     panel.phasen = (q.getAttribute('phase') || '').split(/[\s,]+/).filter(Boolean);
     panel.flaeche = teil.svg ? teil : null;
@@ -186,6 +215,7 @@
   if (phasenKnoepfe.length) leiste.append(gruppe(...phasenKnoepfe));
   leiste.append(gruppe(bVoll, bDrucken), status);
 
+  if (blatt.hasAttribute('oben')) document.body.classList.add('oben');   // Bausteine oben ausrichten statt mittig
   blatt.replaceWith(bogen);
   document.body.append(leiste);
   document.body.classList.add('tafel');
@@ -397,14 +427,17 @@
     for (const p of panels) p.style.removeProperty('--breite');
     if (!document.body.classList.contains('tafelansicht') || !phasen.length) return;
     const gap = parseFloat(getComputedStyle(module).rowGap) || 0;
-    let fest = gap * Math.max(0, sichtbar.length - 1), anteile = 0;
-    for (const p of sichtbar) {
-      const titel = p.querySelector('h2');
-      fest += titel ? titel.getBoundingClientRect().height + 6 : 0;
-      if (p.flaeche) anteile += 1 / p.flaeche.verhaeltnis; else fest += p.lastChild.getBoundingClientRect().height;
+    // Mehrere Durchgänge: Textblöcke ändern ihre Höhe, wenn sich die Breite ändert (Zeilenumbruch).
+    for (let durchgang = 0; durchgang < 4; durchgang++) {
+      let fest = gap * Math.max(0, sichtbar.length - 1), anteile = 0;
+      for (const p of sichtbar) {
+        const titel = p.querySelector('h2');
+        fest += titel ? titel.getBoundingClientRect().height + 6 : 0;
+        if (p.flaeche) anteile += 1 / p.flaeche.verhaeltnis; else fest += p.lastChild.getBoundingClientRect().height;
+      }
+      const breite = Math.max(200, Math.min(module.clientWidth, anteile ? (module.clientHeight - fest) / anteile : module.clientWidth));
+      for (const p of sichtbar) p.style.setProperty('--breite', breite + 'px');
     }
-    const breite = Math.max(200, Math.min(module.clientWidth, anteile ? (module.clientHeight - fest) / anteile : module.clientWidth));
-    for (const p of sichtbar) p.style.setProperty('--breite', breite + 'px');
   }
   new ResizeObserver(() => requestAnimationFrame(einpassen)).observe(module);
 

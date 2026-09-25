@@ -4,7 +4,7 @@
 // Die Unterkapitel (1.1, 1.2 …) werden in kapitel.js als Abschnitte angelegt.
 Portal.klasse({
   themen: [
-    { nr: 1, name: 'Brüche' },                      // 1.1 Brüche und Anteile · 1.2 Vergleichen, Kürzen und Erweitern · 1.3 Brüche und Prozente · 1.4 Brüche auf der Zahlengeraden, Bruchzahlen
+    { nr: 1, name: 'Brüche', ordner: '01-brueche' },                    // 1.1 Brüche und Anteile · 1.2 Vergleichen, Kürzen und Erweitern · 1.3 Brüche und Prozente · 1.4 Brüche auf der Zahlengeraden, Bruchzahlen
     { nr: 2, name: 'Dezimalbrüche' },               // 2.1 Dezimale Schreibweise · 2.2 Brüche in Dezimalbrüche umwandeln
     { nr: 3, name: 'Addition und Subtraktion rationaler Zahlen' },        // 3.1 Rechenregeln bei Dezimalbrüchen · 3.2 Rechenregeln bei Brüchen · 3.3 Vorteilhaftes Rechnen
     { nr: 4, name: 'Multiplikation und Division rationaler Zahlen' },     // 4.1 … von Brüchen · 4.2 … von Dezimalbrüchen · 4.3 Potenzen

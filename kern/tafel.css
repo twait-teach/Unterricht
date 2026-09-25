@@ -40,6 +40,9 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 .tabelle tr>:last-child{border-right:0}.tabelle tr:last-child>*{border-bottom:0}
 .merksatz{border-left:5px solid var(--ueberschrift);background:#eef4fb;padding:.6em 1em;font-weight:600}
 .textblock{line-height:1.45}
+.tafelansicht .gross .textblock,.tafelansicht .gross .merksatz{font-size:clamp(20px,3.3vh,34px)}
+.druckansicht .gross .textblock,.druckansicht .gross .merksatz{font-size:12pt}
+.z{color:#20773b}.n{color:#174fa1}.w{color:#c32e2e} /* Zähler grün, Nenner blau, Wert rot */
 .bruch{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;font-family:var(--serif);font-style:italic;line-height:1.2}
 .bruch>:first-child{border-bottom:1px solid;padding-bottom:1px}
 
@@ -64,6 +67,7 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 .tafelansicht.ohne-rand .rand>:not(.rand-zu){display:none}
 .tafelansicht.ohne-rand .rand-zu{right:0}
 .tafelansicht .module{min-height:0;overflow:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;row-gap:16px}
+.tafelansicht.oben .module{justify-content:flex-start}
 .tafelansicht .panel{width:var(--breite,min(100%,1100px));flex:none}
 
 /* ---------- Druckansicht: DIN A4 ---------- */
