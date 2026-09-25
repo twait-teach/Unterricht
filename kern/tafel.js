@@ -208,12 +208,13 @@
   const phasenKnoepfe = phasen.map((p, i) => { const b = knopf((i + 1) + ' ' + (phasenNamen[i] || 'Phase ' + p)); b.phase = p; return b; });
   const bLoesung = knopf('Musterlösung', 'Musterlösung ein-/ausblenden'), bSichern = knopf('Als Musterlösung sichern', 'Aktuelle Handschrift als Musterlösung speichern (ersetzt die vorhandene)');
   bLoesung.disabled = true; bLoesung.title = 'Noch keine Musterlösung gespeichert';
-  const bVoll = knopf('Vollbild'), bDrucken = knopf('Drucken');
+  const bVoll = knopf('Vollbild'), bDrucken = knopf('Drucken'), bNotizen = knopf('Notizen', 'Randnotizen ein-/ausblenden (liegen über dem Blatt)');
   const status = el('span', 'status');
-  leiste.append(zurueck, gruppe(bTafel, bDruck), gruppe(bBedienen, bStift, bRadierer, bZurueck, bLeeren), gruppe(...farbKnoepfe));
-  leiste.append(gruppe(bLoesung, bSichern));
-  if (phasenKnoepfe.length) leiste.append(gruppe(...phasenKnoepfe));
-  leiste.append(gruppe(bVoll, bDrucken), status);
+  // Zwei Zeilen: oben Phasen, Notizen, Musterlösung – unten Ansicht, Werkzeuge, Farben, Vollbild/Drucken
+  const zeile = (...k) => { const z = el('div', 'zeile'); z.append(...k); return z; };
+  leiste.append(
+    zeile(zurueck, ...(phasenKnoepfe.length ? [gruppe(...phasenKnoepfe)] : []), gruppe(bNotizen), gruppe(bLoesung, bSichern)),
+    zeile(gruppe(bTafel, bDruck), gruppe(bBedienen, bStift, bRadierer, bZurueck, bLeeren), gruppe(...farbKnoepfe), gruppe(bVoll, bDrucken), status));
 
   if (blatt.hasAttribute('oben')) document.body.classList.add('oben');   // Bausteine oben ausrichten statt mittig
   blatt.replaceWith(bogen);
@@ -411,7 +412,11 @@
     try { document.fullscreenElement ? await document.exitFullscreen() : await document.documentElement.requestFullscreen(); }
     catch { melde('Vollbild nicht verfügbar – F11 verwenden'); }
   };
-  randZu.onclick = () => { document.body.classList.toggle('ohne-rand'); randZu.textContent = document.body.classList.contains('ohne-rand') ? '›' : '×'; requestAnimationFrame(einpassen); };
+  // Randnotizen: standardmäßig zu; aufgeklappt liegen sie über dem Blatt (das Blatt selbst verschiebt sich nie).
+  const setzeNotizen = an => { document.body.classList.toggle('notizen-offen', an); bNotizen.setAttribute('aria-pressed', an); };
+  bNotizen.onclick = () => { beende(); setzeNotizen(!document.body.classList.contains('notizen-offen')); };
+  randZu.onclick = () => setzeNotizen(false);
+  setzeNotizen(false);
 
   function setzePhase(p) {
     beende();
@@ -426,18 +431,17 @@
     const sichtbar = panels.filter(p => !p.hidden);
     for (const p of panels) p.style.removeProperty('--breite');
     if (!document.body.classList.contains('tafelansicht') || !phasen.length) return;
+    // Textblöcke haben immer dieselbe Breite (unabhängig von der Phase) und springen daher nicht.
+    // Nur Schreibflächen werden so groß wie möglich in die verbleibende Höhe eingepasst.
     const gap = parseFloat(getComputedStyle(module).rowGap) || 0;
-    // Mehrere Durchgänge: Textblöcke ändern ihre Höhe, wenn sich die Breite ändert (Zeilenumbruch).
-    for (let durchgang = 0; durchgang < 4; durchgang++) {
-      let fest = gap * Math.max(0, sichtbar.length - 1), anteile = 0;
-      for (const p of sichtbar) {
-        const titel = p.querySelector('h2');
-        fest += titel ? titel.getBoundingClientRect().height + 6 : 0;
-        if (p.flaeche) anteile += 1 / p.flaeche.verhaeltnis; else fest += p.lastChild.getBoundingClientRect().height;
-      }
-      const breite = Math.max(200, Math.min(module.clientWidth, anteile ? (module.clientHeight - fest) / anteile : module.clientWidth));
-      for (const p of sichtbar) p.style.setProperty('--breite', breite + 'px');
+    let fest = gap * Math.max(0, sichtbar.length - 1), anteile = 0;
+    for (const p of sichtbar) {
+      const titel = p.querySelector('h2');
+      fest += titel ? titel.getBoundingClientRect().height + 6 : 0;
+      if (p.flaeche) anteile += 1 / p.flaeche.verhaeltnis; else fest += p.lastChild.getBoundingClientRect().height;
     }
+    const breite = Math.max(200, Math.min(module.clientWidth, anteile ? (module.clientHeight - fest) / anteile : module.clientWidth));
+    for (const p of sichtbar) if (p.flaeche) p.style.setProperty('--breite', breite + 'px');
   }
   new ResizeObserver(() => requestAnimationFrame(einpassen)).observe(module);
 

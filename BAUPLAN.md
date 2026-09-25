@@ -85,6 +85,7 @@ Pfade `../../../kern/…` ggf. an die Ordnertiefe anpassen.
 
 Für alle Bausteine: `titel`, `phase="1 2"` (in welchen Unterrichtsphasen sichtbar; ohne = immer),
 `druckbreite="150mm"`, `druck-titel="nein"`, `nur="tafel"` bzw. `nur="druck"`, `id` (fester Name der Schreibfläche).
+Randnotizen sind standardmäßig zu (Knopf „Notizen“ in der Leiste) und liegen aufgeklappt über dem Blatt – das Blatt verschiebt sich nie. Die Leiste hat zwei Zeilen. Textblöcke haben in jeder Phase dieselbe Breite (kein Springen); nur Schreibflächen werden in die Resthöhe eingepasst.
 Zusätzlich: `gross` (größere Schrift bei `ab-text`/`ab-merksatz` in der Tafelansicht); am `<ab-blatt>`: `oben` (Bausteine oben statt mittig – Text springt beim Phasenwechsel nicht). Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
 `verhaeltnis` = Breite : Höhe. Brüche: `<span class="bruch"><span>F</span><span>q</span></span>`.
 
