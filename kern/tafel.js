@@ -298,21 +298,68 @@
   }
   const loesungVerfuegbar = () => { bLoesung.disabled = !hatStriche(loesung); bLoesung.title = bLoesung.disabled ? 'Noch keine Musterlösung gespeichert' : 'Musterlösung ein-/ausblenden'; };
   bLoesung.onclick = () => zeigeLoesungAn(!zeigeLoesung);
+  // ---- Sichern: auf GitHub Pages direkt ins Repository (per Token), sonst Speicherdialog/Download ----
+  const TOKEN_KEY = 'unterricht-github-token';
+  function githubZiel() {
+    const c = window.TAFEL_GITHUB || {}, m = location.hostname.match(/^([^.]+)\.github\.io$/);
+    const teile = location.pathname.split('/').filter(Boolean);
+    const owner = c.owner || (m && m[1]);
+    const repo = c.repo || (m && teile.shift());
+    if (!owner || !repo) return null;
+    if (!/\.html?$/i.test(teile.at(-1) || '')) teile.push('index.html');
+    teile[teile.length - 1] = teile.at(-1).replace(/\.html?$/i, '.loesung.js');
+    return { owner, repo, pfad: teile.join('/') };
+  }
+  const base64 = t => { const b = new TextEncoder().encode(t); let s = ''; for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode(...b.subarray(i, i + 8192)); return btoa(s); };
+  const speicherfehler = m => Object.assign(new Error(m), { speicher: true });
+
+  async function insRepo(text, z) {
+    let token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      token = (prompt('Einmalig: GitHub-Token einfügen (nur für dieses Repository, Berechtigung „Contents: Read and write“).\nEr bleibt nur in diesem Browser gespeichert.') || '').trim();
+      if (!token) throw Object.assign(new Error('abgebrochen'), { name: 'AbortError' });
+    }
+    const url = 'https://api.github.com/repos/' + z.owner + '/' + z.repo + '/contents/' + z.pfad.split('/').map(encodeURIComponent).join('/');
+    const kopf = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+    for (let versuch = 0; versuch < 2; versuch++) {
+      const alt = await fetch(url, { headers: kopf, cache: 'no-store' });
+      if (alt.status === 401) { localStorage.removeItem(TOKEN_KEY); throw speicherfehler('Token ungültig oder abgelaufen – beim nächsten Sichern neu einfügen'); }
+      const sha = alt.ok ? (await alt.json()).sha : undefined;
+      const r = await fetch(url, { method: 'PUT', headers: { ...kopf, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Musterlösung ' + blattname + ' (' + new Date().toLocaleString('de-DE') + ')', content: base64(text), sha }) });
+      if (r.ok) { localStorage.setItem(TOKEN_KEY, token); return; }
+      if (r.status === 401) { localStorage.removeItem(TOKEN_KEY); throw speicherfehler('Token ungültig oder abgelaufen – beim nächsten Sichern neu einfügen'); }
+      if (r.status === 403 || r.status === 404) throw speicherfehler('Token darf in diesem Repository nicht schreiben (Contents: Read and write?)');
+      if (r.status !== 409 && r.status !== 422) throw speicherfehler('GitHub meldet Fehler ' + r.status);
+    }
+    throw speicherfehler('Datei wurde gleichzeitig geändert – bitte noch einmal sichern');
+  }
+  function alsDownload(text, name) {
+    const a = el('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/javascript' })); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+
   bSichern.onclick = async () => {
     beende();
     if (!hatStriche(eigen)) { melde('Nichts geschrieben – nichts zu sichern'); return; }
     const name = blattname + '.loesung.js';
     const text = '// Musterlösung zu ' + blattname + '.html – gesichert am ' + new Date().toLocaleString('de-DE') + '\nwindow.TAFEL_LOESUNG = ' + JSON.stringify({ version: 1, eigen }) + ';\n';
+    const z = githubZiel();
     try {
-      if (window.showSaveFilePicker) {
+      if (z) {
+        melde('Sichere im Repository …');
+        try { await insRepo(text, z); melde('Musterlösung gespeichert – in etwa 1 Minute überall sichtbar'); }
+        catch (e) {
+          if (e.name === 'AbortError') throw e;
+          alsDownload(text, name);   // nichts verlieren: Sicherungsdatei lokal
+          melde((e.speicher ? e.message : 'Keine Verbindung zu GitHub') + ' – Sicherungsdatei heruntergeladen');
+          return;
+        }
+      } else if (window.showSaveFilePicker) {
         const h = await showSaveFilePicker({ suggestedName: name, id: 'tafel-loesung', types: [{ description: 'Musterlösung', accept: { 'text/javascript': ['.js'] } }] });
         const w = await h.createWritable(); await w.write(text); await w.close();
         melde('Musterlösung gespeichert (' + h.name + ')');
-      } else {
-        const a = el('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/javascript' })); a.download = name; a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-        melde(name + ' heruntergeladen – in den Blatt-Ordner legen');
-      }
+      } else { alsDownload(text, name); melde(name + ' heruntergeladen – in den Blatt-Ordner legen'); }
       loesung = JSON.parse(JSON.stringify(eigen)); loesungVerfuegbar();
     } catch (e) { if (e.name !== 'AbortError') melde('Sichern fehlgeschlagen: ' + (e.message || e.name)); }
   };

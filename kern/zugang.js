@@ -2,7 +2,7 @@
    ACHTUNG: Das ist ein Schutz im Browser, kein echter Serverschutz. Er hält Unbeteiligte ab, die zufällig die Adresse
    öffnen. Wer die Dateien direkt abruft (z. B. im öffentlichen GitHub-Repository), sieht sie trotzdem.
    Zugangsdaten: kern/zugang-daten.js (nur ein Prüfwert, nie das Passwort) – erzeugt mit kern/zugang-einrichten.html.
-   Fehlt diese Datei, ist die Seite offen. Abmelden: beliebige Seite mit ?abmelden öffnen. */
+   Fehlt diese Datei, ist die Seite offen. Abmelden (entfernt auch den gespeicherten GitHub-Token): beliebige Seite mit ?abmelden öffnen. */
 'use strict';
 (() => {
   if (window.Zugang) return;
@@ -18,7 +18,7 @@
   }
   window.Zugang = { ableiten };
 
-  if (/[?&]abmelden\b/.test(location.search)) { try { localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); } catch { /* egal */ } }
+  if (/[?&]abmelden\b/.test(location.search)) { try { localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); localStorage.removeItem('unterricht-github-token'); } catch { /* egal */ } }
 
   const stil = document.createElement('style');
   stil.textContent = `html.gesperrt{overflow:hidden}html.gesperrt body>*:not(#zugang){visibility:hidden!important}

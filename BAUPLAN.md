@@ -94,10 +94,16 @@ weil die Schreibfläche am Titel erkannt wird. Wer das vermeiden will, vergibt e
 Ein Tafelbild startet **immer leer**. Was im Unterricht geschrieben wird, bleibt nur so lange erhalten, wie der Tab offen ist
 (ein versehentliches Neuladen überlebt es, ein neuer Tab beginnt leer).
 
-- **Knopf „Als Musterlösung sichern“** (Werkzeugleiste): schreibt die aktuelle Handschrift in die Datei `<blattname>.loesung.js`
-  neben dem Blatt (z. B. `feldstaerke.loesung.js`). In Chrome/Edge öffnet sich ein Speicherdialog, der sich den Ordner merkt;
-  bei einer vorhandenen Datei fragt der Browser „Ersetzen?“ – so überschreibst du bewusst die alte Musterlösung.
-  Andere Browser laden die Datei herunter; dann in den Blatt-Ordner legen. Danach wie gewohnt committen und pushen.
+- **Knopf „Als Musterlösung sichern“** (Werkzeugleiste): schreibt die aktuelle Handschrift in die Datei `<blattname>.loesung.js` neben dem Blatt
+  (z. B. `feldstaerke.loesung.js`). Auf der veröffentlichten Seite (GitHub Pages) geht das direkt ins Repository, also auch vom Tablet aus;
+  nach etwa einer Minute ist sie überall sichtbar. Die vorhandene Musterlösung wird dabei überschrieben (bleibt in der Git-Historie erhalten).
+  Auf dem PC vor dem nächsten Push **`git pull`** nicht vergessen, sonst lehnt Git den Push ab.
+  - *Einmalig am Tablet:* GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → neues Token:
+    Repository access „Only select repositories“ → `unterricht`; Berechtigung Repository permissions → **Contents: Read and write**; Ablaufdatum wählen.
+    Beim ersten Sichern fragt die Seite nach dem Token und merkt ihn sich nur in diesem Browser. Tablet verloren oder Token abgelaufen: Token bei GitHub löschen bzw. neu erzeugen.
+  - *Fällt das Speichern aus* (kein Netz, Token ungültig), lädt die Seite die Datei als Sicherung herunter – es geht nichts verloren.
+  - *Lokal oder eigene Domain:* ohne GitHub-Pages-Adresse öffnet Chrome/Edge einen Speicherdialog (Datei in den Blatt-Ordner legen). Bei eigener Domain
+    im Blatt vor dem Motor `window.TAFEL_GITHUB = { owner: '…', repo: '…' }` setzen.
 - **Knopf „Musterlösung“** blendet die gesicherte Lösung ein und aus (ausgegraut, solange es keine gibt).
   Direktlink: `feldstaerke.html?loesung` – als Eintrag in `kapitel.js`: `{ titel: '… Musterlösung', rolle: 'loesung', typ: 'tafelbild', datei: 'feldstaerke.html?loesung' }`.
 - **Drucken** druckt, was gerade sichtbar ist – mit eingeblendeter Musterlösung also die Musterlösung.
@@ -110,7 +116,7 @@ Der Motor (`tafel.js`, `seite.js`, `portal.js`) lädt `zugang.js` selbst nach, f
 
 - **Einrichten/ändern:** `kern/zugang-einrichten.html` öffnen, Benutzername und Passwort wählen, die erzeugte Datei `zugang-daten.js`
   in `kern/` legen, committen, pushen. Die Datei enthält nur einen Prüfwert, nie das Passwort. **Ohne diese Datei ist die Seite offen.**
-- **Angemeldet bleiben:** Häkchen im Anmeldefenster (Standard: an). Auf fremden Rechnern abwählen oder danach eine beliebige Seite mit `?abmelden` öffnen.
+- **Angemeldet bleiben:** Häkchen im Anmeldefenster (Standard: an). Auf fremden Rechnern abwählen oder danach eine beliebige Seite mit `?abmelden` öffnen (entfernt auch den gespeicherten GitHub-Token).
 - **Grenze:** Das ist ein Sichtschutz im Browser, kein Serverschutz. Wer die Dateien direkt abruft (z. B. im öffentlichen Repository), sieht sie trotzdem –
   auch die Schulbuch-Bilder. Für echten Schutz braucht es einen Server mit Anmeldung (z. B. Cloudflare Access) oder ein privates Hosting.
 - Neue Seite: im `<head>` direkt nach dem viewport-Meta `<script src="…/kern/zugang.js"></script>` einfügen (Pfad je nach Ordnertiefe).
