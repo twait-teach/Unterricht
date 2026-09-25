@@ -1,5 +1,6 @@
 /* Kopfleiste für einfache Inhaltsseiten: Zurück zum Portal + Drucken. */
 'use strict';
+{ if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const src = document.currentScript.getAttribute('src');
   const wurzel = src.slice(0, src.lastIndexOf('kern/'));

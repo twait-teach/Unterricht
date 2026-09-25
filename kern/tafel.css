@@ -88,3 +88,6 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
   .tafelansicht .buehne{grid-template-columns:1fr}
   .tafelansicht .rand{display:none}
 }
+
+/* Musterlösung */
+.leiste button:disabled{opacity:.45;cursor:not-allowed}

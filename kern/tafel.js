@@ -7,6 +7,7 @@
    Dieser Motor baut daraus Werkzeugleiste, Tafelansicht, Druckansicht und Schreibflächen.
    Tafelbilder selbst enthalten nie Logik – Änderungen am Verhalten nur hier. */
 'use strict';
+{ if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
@@ -176,9 +177,12 @@
   const bZurueck = knopf('↶', 'Letzten Strich rückgängig'), bLeeren = knopf('⌫', 'Alle eigenen Anmerkungen löschen');
   const farbKnoepfe = FARBEN.map(([c, n]) => { const b = knopf('<span></span>', n, 'farbe'); b.style.setProperty('--farbe', c); b.farbe = c; return b; });
   const phasenKnoepfe = phasen.map((p, i) => { const b = knopf((i + 1) + ' ' + (phasenNamen[i] || 'Phase ' + p)); b.phase = p; return b; });
+  const bLoesung = knopf('Musterlösung', 'Musterlösung ein-/ausblenden'), bSichern = knopf('Als Musterlösung sichern', 'Aktuelle Handschrift als Musterlösung speichern (ersetzt die vorhandene)');
+  bLoesung.disabled = true; bLoesung.title = 'Noch keine Musterlösung gespeichert';
   const bVoll = knopf('Vollbild'), bDrucken = knopf('Drucken');
   const status = el('span', 'status');
   leiste.append(zurueck, gruppe(bTafel, bDruck), gruppe(bBedienen, bStift, bRadierer, bZurueck, bLeeren), gruppe(...farbKnoepfe));
+  leiste.append(gruppe(bLoesung, bSichern));
   if (phasenKnoepfe.length) leiste.append(gruppe(...phasenKnoepfe));
   leiste.append(gruppe(bVoll, bDrucken), status);
 
@@ -187,16 +191,26 @@
   document.body.classList.add('tafel');
 
   // ---------- Speicher ----------
-  // Ebenen: "eigen" = was auf diesem Gerät geschrieben wird (localStorage).
-  //         "lehrer" = veröffentlichtes Tafelbild aus tafelbild.json im selben Ordner (nur lesen).
+  // Das Blatt startet immer leer. Was im Unterricht geschrieben wird ("eigen"), bleibt nur in dieser
+  // Sitzung erhalten (sessionStorage: übersteht ein versehentliches Neuladen, nicht das Schließen des Tabs).
+  // Die Musterlösung liegt als Datei <blattname>.loesung.js neben dem Blatt (nur lesen, per Knopf sichtbar,
+  // oder direkt über den Link  blatt.html?loesung). Ein Skript statt fetch: funktioniert auch ohne Server.
   const SCHLUESSEL = 'tafel:' + location.pathname;
-  let eigen = {}, lehrer = {};
-  try { eigen = JSON.parse(localStorage.getItem(SCHLUESSEL))?.eigen || {}; } catch { /* leer beginnen */ }
-  fetch('tafelbild.json').then(r => r.ok ? r.json() : null).then(d => { if (d?.eigen) { lehrer = d.eigen; flaechen.forEach(zeichne); } }).catch(() => {});
+  const blattname = (location.pathname.split('/').pop() || 'index').replace(/\.html?$/i, '') || 'index';
+  let eigen = {}, loesung = {}, zeigeLoesung = new URLSearchParams(location.search).has('loesung');
+  try { eigen = JSON.parse(sessionStorage.getItem(SCHLUESSEL))?.eigen || {}; } catch { /* leer beginnen */ }
+  const hatStriche = d => Object.values(d).some(a => a.length);
+  const ladeLoesung = () => new Promise(fertig => {
+    const sk = document.createElement('script');
+    sk.src = blattname + '.loesung.js?v=' + Date.now();
+    sk.onload = () => { loesung = window.TAFEL_LOESUNG?.eigen || {}; fertig(); };
+    sk.onerror = () => fertig();
+    document.head.append(sk);
+  });
 
   function speichern() {
-    try { localStorage.setItem(SCHLUESSEL, JSON.stringify({ version: 1, eigen })); melde('Auf diesem Gerät gespeichert'); }
-    catch { melde('Speichern nicht möglich – vor dem Schließen drucken'); }
+    try { sessionStorage.setItem(SCHLUESSEL, JSON.stringify({ version: 1, eigen })); }
+    catch { /* nur Sitzungspuffer – kein Grund zur Meldung */ }
   }
   const melde = t => { status.textContent = t; status.title = t; };
 
@@ -207,7 +221,7 @@
 
   function zeichne(f) {
     f.svg.replaceChildren();
-    for (const striche of [lehrer[f.id] || [], eigen[f.id] || []]) for (const s of striche) {
+    for (const striche of [zeigeLoesung ? loesung[f.id] || [] : [], eigen[f.id] || []]) for (const s of striche) {
       const p = document.createElementNS(NS, 'path');
       p.setAttribute('d', pfad(s.p)); p.setAttribute('stroke', s.c);
       f.svg.append(p);
@@ -273,8 +287,34 @@
     beende();
     if (!confirm('Alle eigenen Anmerkungen und Notizen auf diesem Blatt löschen?')) return;
     eigen = {}; verlauf.length = 0; flaechen.forEach(zeichne);
-    try { localStorage.removeItem(SCHLUESSEL); } catch { /* egal */ }
+    try { sessionStorage.removeItem(SCHLUESSEL); } catch { /* egal */ }
     melde('Anmerkungen gelöscht');
+  };
+
+  function zeigeLoesungAn(an) {
+    zeigeLoesung = an; bLoesung.setAttribute('aria-pressed', an);
+    flaechen.forEach(zeichne);
+    melde(an ? 'Musterlösung wird angezeigt' : 'Leeres Blatt');
+  }
+  const loesungVerfuegbar = () => { bLoesung.disabled = !hatStriche(loesung); bLoesung.title = bLoesung.disabled ? 'Noch keine Musterlösung gespeichert' : 'Musterlösung ein-/ausblenden'; };
+  bLoesung.onclick = () => zeigeLoesungAn(!zeigeLoesung);
+  bSichern.onclick = async () => {
+    beende();
+    if (!hatStriche(eigen)) { melde('Nichts geschrieben – nichts zu sichern'); return; }
+    const name = blattname + '.loesung.js';
+    const text = '// Musterlösung zu ' + blattname + '.html – gesichert am ' + new Date().toLocaleString('de-DE') + '\nwindow.TAFEL_LOESUNG = ' + JSON.stringify({ version: 1, eigen }) + ';\n';
+    try {
+      if (window.showSaveFilePicker) {
+        const h = await showSaveFilePicker({ suggestedName: name, id: 'tafel-loesung', types: [{ description: 'Musterlösung', accept: { 'text/javascript': ['.js'] } }] });
+        const w = await h.createWritable(); await w.write(text); await w.close();
+        melde('Musterlösung gespeichert (' + h.name + ')');
+      } else {
+        const a = el('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/javascript' })); a.download = name; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        melde(name + ' heruntergeladen – in den Blatt-Ordner legen');
+      }
+      loesung = JSON.parse(JSON.stringify(eigen)); loesungVerfuegbar();
+    } catch (e) { if (e.name !== 'AbortError') melde('Sichern fehlgeschlagen: ' + (e.message || e.name)); }
   };
 
   function setzeAnsicht(druck) {
@@ -326,5 +366,7 @@
   setzeModus('bedienen');
   setzeAnsicht(false);
   if (phasen.length) setzePhase(phasen[0]);
-  melde(Object.keys(eigen).length ? 'Gespeicherte Anmerkungen geladen' : 'Bereit');
+  melde(hatStriche(eigen) ? 'Sitzung wiederhergestellt' : 'Leeres Blatt');
+  bLoesung.setAttribute('aria-pressed', zeigeLoesung);
+  ladeLoesung().then(() => { loesungVerfuegbar(); if (zeigeLoesung && !hatStriche(loesung)) { zeigeLoesung = false; bLoesung.setAttribute('aria-pressed', false); melde('Keine Musterlösung vorhanden'); } flaechen.forEach(zeichne); });
 })();

@@ -5,6 +5,7 @@
      physik/klasse-9/01-energie/kapitel.js → Portal.kapitel({...}) (Materialien)
    Moduldateien werden erst geladen, wenn sie gebraucht werden. */
 'use strict';
+{ if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 
 const Portal = (() => {
   const ROLLEN = [
@@ -149,7 +150,7 @@ const Portal = (() => {
     }
     const a = el('a', 'karte');
     if (m.url) { a.href = m.url; a.target = '_blank'; a.rel = 'noopener'; }
-    else if (typ === 'seite' || typ === 'tafelbild') a.href = ordner + '/' + m.datei + '?von=' + encodeURIComponent(von);
+    else if (typ === 'seite' || typ === 'tafelbild') a.href = ordner + '/' + m.datei + (m.datei.includes('?') ? '&' : '?') + 'von=' + encodeURIComponent(von);
     else { a.href = ordner + '/' + m.datei; a.setAttribute('download', ''); }
     a.append(el('span', 'titel', m.titel), el('span', 'art art-' + typ, TYPEN[typ] || typ));
     li.append(a);

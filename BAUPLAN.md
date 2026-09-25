@@ -89,6 +89,32 @@ Für alle Bausteine: `titel`, `phase="1 2"` (in welchen Unterrichtsphasen sichtb
 **Wichtig:** Wird ein Baustein umbenannt, geht die gespeicherte Handschrift darauf verloren,
 weil die Schreibfläche am Titel erkannt wird. Wer das vermeiden will, vergibt ein festes `id`.
 
+## Leeres Blatt und Musterlösung
+
+Ein Tafelbild startet **immer leer**. Was im Unterricht geschrieben wird, bleibt nur so lange erhalten, wie der Tab offen ist
+(ein versehentliches Neuladen überlebt es, ein neuer Tab beginnt leer).
+
+- **Knopf „Als Musterlösung sichern“** (Werkzeugleiste): schreibt die aktuelle Handschrift in die Datei `<blattname>.loesung.js`
+  neben dem Blatt (z. B. `feldstaerke.loesung.js`). In Chrome/Edge öffnet sich ein Speicherdialog, der sich den Ordner merkt;
+  bei einer vorhandenen Datei fragt der Browser „Ersetzen?“ – so überschreibst du bewusst die alte Musterlösung.
+  Andere Browser laden die Datei herunter; dann in den Blatt-Ordner legen. Danach wie gewohnt committen und pushen.
+- **Knopf „Musterlösung“** blendet die gesicherte Lösung ein und aus (ausgegraut, solange es keine gibt).
+  Direktlink: `feldstaerke.html?loesung` – als Eintrag in `kapitel.js`: `{ titel: '… Musterlösung', rolle: 'loesung', typ: 'tafelbild', datei: 'feldstaerke.html?loesung' }`.
+- **Drucken** druckt, was gerade sichtbar ist – mit eingeblendeter Musterlösung also die Musterlösung.
+- Ein leeres Blatt kann nicht als Musterlösung gesichert werden (Schutz vor versehentlichem Überschreiben).
+
+## Zugang (Benutzername + Passwort)
+
+Jede Seite lädt zuerst `kern/zugang.js` und zeigt bis zur Anmeldung nur ein Anmeldefenster (Browser-Passwortmanager funktionieren).
+Der Motor (`tafel.js`, `seite.js`, `portal.js`) lädt `zugang.js` selbst nach, falls eine neue Seite die Zeile vergessen hat.
+
+- **Einrichten/ändern:** `kern/zugang-einrichten.html` öffnen, Benutzername und Passwort wählen, die erzeugte Datei `zugang-daten.js`
+  in `kern/` legen, committen, pushen. Die Datei enthält nur einen Prüfwert, nie das Passwort. **Ohne diese Datei ist die Seite offen.**
+- **Angemeldet bleiben:** Häkchen im Anmeldefenster (Standard: an). Auf fremden Rechnern abwählen oder danach eine beliebige Seite mit `?abmelden` öffnen.
+- **Grenze:** Das ist ein Sichtschutz im Browser, kein Serverschutz. Wer die Dateien direkt abruft (z. B. im öffentlichen Repository), sieht sie trotzdem –
+  auch die Schulbuch-Bilder. Für echten Schutz braucht es einen Server mit Anmeldung (z. B. Cloudflare Access) oder ein privates Hosting.
+- Neue Seite: im `<head>` direkt nach dem viewport-Meta `<script src="…/kern/zugang.js"></script>` einfügen (Pfad je nach Ordnertiefe).
+
 ## Arbeiten mit Claude
 
 Für eine Änderung nur die betroffene Datei hochladen bzw. nennen, z. B.:
