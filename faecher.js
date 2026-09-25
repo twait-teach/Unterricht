@@ -8,5 +8,6 @@ Portal.faecher([
   { name: 'Physik', klassen: [
     { id: 'ph7', name: '7', ordner: 'physik/klasse-7' },
     { id: 'ph9', name: '9', ordner: 'physik/klasse-9' },
+    { id: 'ph12', name: '12', ordner: 'physik/klasse-12' },
   ]},
 ]);
