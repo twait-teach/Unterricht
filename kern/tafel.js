@@ -10,7 +10,7 @@
 { if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
-  const MOTOR = 'Motor 25.09.-8';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const MOTOR = 'Motor 25.09.-9';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
   const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];

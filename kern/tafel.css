@@ -79,7 +79,6 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 .druckansicht .kopfzeile{display:flex;justify-content:space-between;border-bottom:3px double var(--kopflinie);color:var(--kopftext);padding-bottom:5px;font-size:10pt;text-transform:uppercase}
 .druckansicht h1{font-size:24pt;margin:10px 0 12px}
 .druckansicht h2{font-size:14pt}
-.druckansicht .versuch-text{font-size:2.5cqw}
 .druckansicht .buehne{flex:1}
 .druckansicht .panel{width:var(--druckbreite,100%);margin-bottom:4mm;break-inside:avoid}
 .druckansicht .panel[hidden]{display:block}
