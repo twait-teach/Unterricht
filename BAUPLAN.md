@@ -76,9 +76,9 @@ Pfade `../../../kern/…` ggf. an die Ordnertiefe anpassen.
 | `<ab-versuch>` | `bild`, `bildbreite="48%"`, `verhaeltnis="2.8"` | Bild links, Text (Inhalt) rechts |
 | `<ab-bild>` | `bild`, `alt` | Abbildung zum Beschriften |
 | `<ab-tabelle>` | `spalten="4"`, darin `<ab-zeile>…</ab-zeile>` | Wertetabelle |
-| `<ab-karo>` | `verhaeltnis="2"`, `kaestchen="40"` | Karofeld / Diagramm |
+| `<ab-karo>` | `zeilen="8"` (Mindesthöhe in Kästchen), `zeilen-druck="10"` | Karofeld (Heft-Karo, 5 mm im Druck) |
 | `<ab-linien>` | `verhaeltnis="3"`, `abstand="55"` | Schreiblinien |
-| `<ab-streifen>` | `teile="4"`, `balken="2"`, `karo="nein"`, `verhaeltnis="2.3"` | Balkenmodelle: leere, geteilte Streifen (Beschriften/Ausmalen von Hand) + Karofeld daneben |
+| `<ab-streifen>` | `teile="4"`, `balken="2"` | Balkenmodelle auf dem Karoraster: leere, geteilte Streifen links, Karo für Rechnungen rechts |
 | `<ab-merksatz>` | – | hervorgehobener Merksatz |
 | `<ab-text>` | – | Fließtext |
 | `<ab-simulation>` | `url`, `titel` | Reiter in der Randspalte |
@@ -86,11 +86,21 @@ Pfade `../../../kern/…` ggf. an die Ordnertiefe anpassen.
 Für alle Bausteine: `titel`, `phase="1 2"` (in welchen Unterrichtsphasen sichtbar; ohne = immer),
 `druckbreite="150mm"`, `druck-titel="nein"`, `nur="tafel"` bzw. `nur="druck"`, `id` (fester Name der Schreibfläche).
 Randnotizen sind standardmäßig zu (Knopf „Notizen“ in der Leiste) und liegen aufgeklappt über dem Blatt – das Blatt verschiebt sich nie. Die Leiste hat zwei Zeilen. Textblöcke haben in jeder Phase dieselbe Breite (kein Springen); nur Schreibflächen werden in die Resthöhe eingepasst.
-Zusätzlich: `gross` (größere Schrift bei `ab-text`/`ab-merksatz` in der Tafelansicht); am `<ab-blatt>`: `oben` (Bausteine oben statt mittig – Text springt beim Phasenwechsel nicht). Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
-`verhaeltnis` = Breite : Höhe. Brüche: `<span class="bruch"><span>F</span><span>q</span></span>`.
+Zusätzlich: `tafel-titel="nein"` (Titel nur im Druck); am `<ab-blatt>`: `oben` (Bausteine oben statt mittig – Text springt beim Phasenwechsel nicht). Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
+`verhaeltnis` = Breite : Höhe (nur noch für Bilder/Versuch/Tabelle; Karo und Streifen rechnen in Kästchen). Brüche: `<span class="bruch"><span>F</span><span>q</span></span>`.
 
 **Wichtig:** Wird ein Baustein umbenannt, geht die gespeicherte Handschrift darauf verloren,
 weil die Schreibfläche am Titel erkannt wird. Wer das vermeiden will, vergibt ein festes `id`.
+
+## Kästchen, Schrift, Layout (Regeln der Engine)
+
+- **Ein Kästchenmaß pro Blatt:** Jede Karo-/Streifenfläche ist 35 Kästchen breit (Druck: 175 mm = 5 mm je Kästchen) und immer eine ganze Zahl Zeilen hoch.
+  Die Kästchengröße (ganze Pixel) ist in allen Phasen und Blöcken gleich; sie wird so gewählt, dass die höchste Phase noch ohne Scrollen passt.
+  Restplatz der aktuellen Phase geht als zusätzliche Zeilen an die letzte Karofläche. `zeilen` ist die **Mindesthöhe**. Dünne, einheitliche Linien – keine Verstärkung alle 5 Kästchen.
+- **Schrift:** Basisgröße `--s` (Höhe des Bildschirms); Text = 1 · `--s`, Zwischentitel = 1,3 · `--s`, Blattüberschrift = 1,6 · `--s`. Nie einzeln festlegen.
+- **Breite:** Textblöcke immer volle Breite (keine feste Höchstbreite); Schreibflächen so breit wie das Raster. Brüche im Fließtext werden verkleinert (`.textblock .bruch`).
+- **Handschrift-Koordinaten** hängen an der Breite (1000 Einheiten); Höhenänderungen verschieben nichts. Beim Ändern von Mindesthöhen darauf achten, dass alte Musterlösungen nicht abgeschnitten werden (Feldstärke-Diagramm: mindestens 15 Zeilen).
+- **Prüfen vor dem Abgeben:** `python werkzeuge/tafel-pruefen.py <blatt.html> [--bilder]` (Playwright/Chromium nötig) misst je Bildschirmgröße (u. a. Surface Pro 7: 1368×912 und 1368×760) und Phase: kein Scrollen, Überschrift größer als Text, gleich große ganze Kästchen, Druck = eine A4-Seite.
 
 ## Leeres Blatt und Musterlösung
 

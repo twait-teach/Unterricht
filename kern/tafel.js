@@ -10,6 +10,7 @@
 { if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
+  const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
   const src = document.currentScript.getAttribute('src');
   const wurzel = src.slice(0, src.lastIndexOf('kern/'));
@@ -42,6 +43,29 @@
     f.hoehe = 1000 / v;
     f.el.style.setProperty('--v', v);
     f.svg.setAttribute('viewBox', '0 0 1000 ' + f.hoehe);
+  }
+
+  function setzeZeilen(f, z) { f.zeilen = z; setzeVerhaeltnis(f, SPALTEN / z); f.zeichneRaster(); }
+
+  // Schreibfläche aus ganzen Kästchen: Breite = SPALTEN Kästchen, Höhe = ganze Zeilen. Das Gitter wird aus
+  // f.zeilen gezeichnet und deshalb bei jeder Höhenänderung neu erzeugt. Kästchen bleiben so überall gleich groß.
+  function rasterFlaeche(q, zeilen, inhalt) {
+    const f = neueFlaeche(q, SPALTEN / zeilen);
+    f.raster = true; f.min = zeilen; f.zeilen = zeilen;
+    f.druckZeilen = Math.max(zeilen, Math.round(zahl(q.getAttribute('zeilen-druck'), zeilen)));
+    const svg = document.createElementNS(NS, 'svg');
+    svg.classList.add('raster'); svg.setAttribute('shape-rendering', 'crispEdges');
+    const id = 'raster-' + f.id, u = 1000 / SPALTEN;
+    f.zeichneRaster = () => {
+      const H = f.zeilen * u;
+      svg.setAttribute('viewBox', '0 0 1000 ' + H);
+      svg.innerHTML = `<defs><pattern id="${id}" width="${u}" height="${u}" patternUnits="userSpaceOnUse"><path d="M${u} 0H0V${u}" fill="none" stroke="#b9c4ce" stroke-width="1" vector-effect="non-scaling-stroke"/></pattern></defs>
+        <rect width="1000" height="${H}" fill="url(#${id})"/>${inhalt ? inhalt(u, H) : ''}
+        <rect x=".5" y=".5" width="999" height="${H - 1}" fill="none" stroke="#8e9ca9" vector-effect="non-scaling-stroke"/>`;
+    };
+    f.zeichneRaster();
+    f.el.prepend(svg);
+    return f;
   }
 
   const BAUSTEINE = {
@@ -77,17 +101,11 @@
       f.el.prepend(tab);
       return f;
     },
+    // Karofeld: zeilen="8" (ganze Kästchenzeilen; mehr Platz wird automatisch dazugegeben), zeilen-druck="10".
+    // Altes verhaeltnis="2.3" wird in Zeilen umgerechnet. Einheitlich dünne Linien wie im Heft.
     karo(q) {
-      const f = neueFlaeche(q, zahl(q.getAttribute('verhaeltnis'), 2));
-      const n = zahl(q.getAttribute('kaestchen'), 40), k = 1000 / n, id = 'karo-' + f.id;
-      const svg = document.createElementNS(NS, 'svg');
-      svg.classList.add('raster');
-      svg.setAttribute('viewBox', '0 0 1000 ' + f.hoehe);
-      svg.innerHTML = `<defs><pattern id="${id}-k" width="${k}" height="${k}" patternUnits="userSpaceOnUse"><path d="M${k} 0H0V${k}" fill="none" stroke="#bac4cd" stroke-width="1"/></pattern>
-        <pattern id="${id}-g" width="${5 * k}" height="${5 * k}" patternUnits="userSpaceOnUse"><rect width="${5 * k}" height="${5 * k}" fill="url(#${id}-k)"/><path d="M${5 * k} 0H0V${5 * k}" fill="none" stroke="#8e9ca9" stroke-width="1.3"/></pattern></defs>
-        <rect x=".5" y=".5" width="999" height="${f.hoehe - 1}" fill="url(#${id}-g)" stroke="#8e9ca9"/>`;
-      f.el.prepend(svg);
-      return f;
+      const z = q.hasAttribute('zeilen') ? zahl(q.getAttribute('zeilen'), 8) : SPALTEN / zahl(q.getAttribute('verhaeltnis'), 2);
+      return rasterFlaeche(q, Math.max(2, Math.round(z)));
     },
     linien(q) {
       const f = neueFlaeche(q, zahl(q.getAttribute('verhaeltnis'), 3));
@@ -101,33 +119,21 @@
       f.el.prepend(svg);
       return f;
     },
-    // Balkenmodelle: leere, in gleiche Teile geteilte Streifen (links) + Karofeld für Rechnungen (rechts).
-    // <ab-streifen teile="4" balken="2" karo="rechts|nein" verhaeltnis="2">  – ausgemalt/beschriftet wird von Hand.
+    // Balkenmodelle: leere, in gleiche Teile geteilte Streifen auf dem Kästchenraster; rechts davon Platz für Rechnungen
+    // (dünne Trennlinie). <ab-streifen teile="4" balken="2"> – Beschriften und Ausmalen von Hand.
     streifen(q) {
       const teile = Math.max(1, Math.round(zahl(q.getAttribute('teile'), 4)));
       const balken = Math.max(1, Math.round(zahl(q.getAttribute('balken'), 2)));
-      const mitKaro = q.getAttribute('karo') !== 'nein';
-      const f = neueFlaeche(q, zahl(q.getAttribute('verhaeltnis'), 2));
-      const H = f.hoehe, breite = mitKaro ? 480 : 1000, x0 = 24, bw = breite - 2 * x0, tw = bw / teile;
-      const slot = H / balken, bh = Math.min(90, slot * 0.34), k = 25, id = 'streifen-' + f.id;
-      let s = '';
-      if (mitKaro) {
-        const kx = 500, kw = 1000 - kx;
-        s += `<defs><pattern id="${id}-k" x="${kx}" y="0" width="${k}" height="${k}" patternUnits="userSpaceOnUse"><path d="M${k} 0H0V${k}" fill="none" stroke="#bac4cd" stroke-width="1"/></pattern>
-          <pattern id="${id}-g" x="${kx}" y="0" width="${5 * k}" height="${5 * k}" patternUnits="userSpaceOnUse"><rect width="${5 * k}" height="${5 * k}" fill="url(#${id}-k)"/><path d="M${5 * k} 0H0V${5 * k}" fill="none" stroke="#8e9ca9" stroke-width="1.3"/></pattern></defs>
-          <rect x="${kx + .5}" y=".5" width="${kw - 1}" height="${H - 1}" fill="url(#${id}-g)" stroke="#8e9ca9"/>`;
-      }
-      for (let b = 0; b < balken; b++) {
-        const y = slot * b + (slot - bh) / 2;
-        s += `<rect x="${x0}" y="${y}" width="${bw}" height="${bh}" fill="#fff" stroke="#222" stroke-width="2.5"/>`;
-        for (let i = 1; i < teile; i++) s += `<path d="M${x0 + i * tw} ${y}V${y + bh}" stroke="#222" stroke-width="2.5"/>`;
-      }
-      const svg = document.createElementNS(NS, 'svg');
-      svg.classList.add('raster');
-      svg.setAttribute('viewBox', '0 0 1000 ' + H);
-      svg.innerHTML = s;
-      f.el.prepend(svg);
-      return f;
+      const links = 18, tw = Math.max(1, Math.floor((links - 2) / teile));   // Teilbreite in Kästchen
+      return rasterFlaeche(q, 5 * balken + 2, u => {
+        let s = '';
+        for (let b = 0; b < balken; b++) {
+          const y = (2 + 5 * b) * u, h = 3 * u, x = u, w = tw * teile * u;
+          s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" stroke="#222" stroke-width="2.2" vector-effect="non-scaling-stroke"/>`;
+          for (let i = 1; i < teile; i++) s += `<path d="M${x + i * tw * u} ${y}V${y + h}" stroke="#222" stroke-width="2.2" vector-effect="non-scaling-stroke"/>`;
+        }
+        return s + `<path d="M${links * u} 0V100000" stroke="#8e9ca9" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`;
+      });
     },
     merksatz: q => ({ el: el('div', 'merksatz', q.innerHTML) }),
     text: q => ({ el: el('div', 'textblock', q.innerHTML) }),
@@ -173,12 +179,13 @@
     if (titel) {
       const h2 = el('h2', null, titel);
       if (q.getAttribute('druck-titel') === 'nein') h2.classList.add('nur-tafel');
+      if (q.getAttribute('tafel-titel') === 'nein') h2.classList.add('nur-druck');
       panel.append(h2);
     }
     panel.append(teil.el);
     if (q.getAttribute('nur')) panel.classList.add('nur-' + q.getAttribute('nur'));
-    if (q.hasAttribute('gross')) panel.classList.add('gross');   // größere Schrift in der Tafelansicht
     if (q.getAttribute('druckbreite')) panel.style.setProperty('--druckbreite', q.getAttribute('druckbreite'));
+    else if (teil.raster) panel.style.setProperty('--druckbreite', '175mm');   // 35 Kästchen à 5 mm
     panel.phasen = (q.getAttribute('phase') || '').split(/[\s,]+/).filter(Boolean);
     panel.flaeche = teil.svg ? teil : null;
     panels.push(panel);
@@ -400,7 +407,7 @@
     document.body.classList.toggle('druckansicht', druck);
     document.body.classList.toggle('tafelansicht', !druck);
     druecke([bTafel, bDruck], druck ? bDruck : bTafel);
-    requestAnimationFrame(einpassen);
+    einpassen(); requestAnimationFrame(einpassen);   // sofort (für den Druck) und nach dem Zeichnen nochmals
   }
   bTafel.onclick = () => setzeAnsicht(false);
   bDruck.onclick = () => setzeAnsicht(true);
@@ -418,31 +425,55 @@
   randZu.onclick = () => setzeNotizen(false);
   setzeNotizen(false);
 
+  let phase = null;
   function setzePhase(p) {
-    beende();
+    beende(); phase = p;
     for (const panel of panels) panel.hidden = panel.phasen.length > 0 && !panel.phasen.includes(p);
     druecke(phasenKnoepfe, phasenKnoepfe.find(b => b.phase === p));
     requestAnimationFrame(einpassen);
   }
   phasenKnoepfe.forEach(b => b.onclick = () => setzePhase(b.phase));
 
-  // Tafelansicht: sichtbare Bausteine so groß wie möglich, ohne zu scrollen.
+  // Tafelansicht: Layout ohne Scrollen.
+  // Textblöcke haben immer die volle Breite (kein Springen). Schreibflächen sind SPALTEN ganze Kästchen breit; die
+  // Kästchengröße c (ganze Pixel) ist für das ganze Blatt gleich und so gewählt, dass die höchste Phase noch passt.
+  // Übrige Höhe der aktuellen Phase bekommt die letzte Karo-Fläche als zusätzliche ganze Zeilen.
   function einpassen() {
-    const sichtbar = panels.filter(p => !p.hidden);
+    const tafel = document.body.classList.contains('tafelansicht');
+    const raster = flaechen.filter(f => f.raster);
     for (const p of panels) p.style.removeProperty('--breite');
-    if (!document.body.classList.contains('tafelansicht') || !phasen.length) return;
-    // Textblöcke haben immer dieselbe Breite (unabhängig von der Phase) und springen daher nicht.
-    // Nur Schreibflächen werden so groß wie möglich in die verbleibende Höhe eingepasst.
-    const gap = parseFloat(getComputedStyle(module).rowGap) || 0;
-    let fest = gap * Math.max(0, sichtbar.length - 1), anteile = 0;
-    for (const p of sichtbar) {
-      const titel = p.querySelector('h2');
-      fest += titel ? titel.getBoundingClientRect().height + 6 : 0;
-      if (p.flaeche) anteile += 1 / p.flaeche.verhaeltnis; else fest += p.lastChild.getBoundingClientRect().height;
+    if (!tafel || !phasen.length) {
+      for (const f of raster) { setzeZeilen(f, tafel ? f.min : f.druckZeilen); zeichne(f); }
+      return;
     }
-    const breite = Math.max(200, Math.min(module.clientWidth, anteile ? (module.clientHeight - fest) / anteile : module.clientWidth));
-    for (const p of sichtbar) if (p.flaeche) p.style.setProperty('--breite', breite + 'px');
+    const gap = parseFloat(getComputedStyle(module).rowGap) || 0;
+    const W = module.clientWidth, H = module.clientHeight;
+    const vorher = panels.map(p => p.hidden);
+    const messe = ph => {
+      const ps = panels.filter(p => !p.classList.contains('nur-druck') && (!p.phasen.length || p.phasen.includes(ph)));
+      panels.forEach(p => { p.hidden = !ps.includes(p); });
+      let fest = gap * Math.max(0, ps.length - 1), feste = 0, rasterZ = 0;
+      for (const p of ps) {
+        if (p.flaeche) {
+          const t = p.querySelector('h2'); fest += t ? t.getBoundingClientRect().height + 6 : 0;
+          if (p.flaeche.raster) rasterZ += p.flaeche.min; else feste += SPALTEN / p.flaeche.verhaeltnis;
+        } else fest += p.getBoundingClientRect().height;
+      }
+      return { ps, fest, feste, rasterZ };
+    };
+    const daten = phasen.map(ph => [ph, messe(ph)]);
+    panels.forEach((p, i) => { p.hidden = vorher[i]; });
+    let c = Math.floor(W / SPALTEN);
+    for (const [, d] of daten) if (d.feste + d.rasterZ) c = Math.min(c, Math.floor((H - d.fest) / (d.feste + d.rasterZ)));
+    c = Math.max(8, c);
+    for (const p of panels) if (p.flaeche) p.style.setProperty('--breite', SPALTEN * c + 'px');
+    for (const f of raster) setzeZeilen(f, f.min);
+    const d = daten.find(x => x[0] === phase)?.[1];
+    const letzte = d?.ps.filter(p => p.flaeche?.raster).at(-1);
+    if (letzte) { const rest = Math.floor((H - d.fest - (d.feste + d.rasterZ) * c) / c); if (rest > 0) setzeZeilen(letzte.flaeche, letzte.flaeche.min + rest); }
+    raster.forEach(zeichne);
   }
+  document.fonts?.ready.then(() => requestAnimationFrame(einpassen));
   new ResizeObserver(() => requestAnimationFrame(einpassen)).observe(module);
 
   // Start
