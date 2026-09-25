@@ -117,8 +117,10 @@ Ein Tafelbild startet **immer leer**. Was im Unterricht geschrieben wird, bleibt
 Jede Seite lädt zuerst `kern/zugang.js` und zeigt bis zur Anmeldung nur ein Anmeldefenster (Browser-Passwortmanager funktionieren).
 Der Motor (`tafel.js`, `seite.js`, `portal.js`) lädt `zugang.js` selbst nach, falls eine neue Seite die Zeile vergessen hat.
 
-- **Einrichten/ändern:** `kern/zugang-einrichten.html` öffnen, Benutzername und Passwort wählen, die erzeugte Datei `zugang-daten.js`
-  in `kern/` legen, committen, pushen. Die Datei enthält nur einen Prüfwert, nie das Passwort. **Ohne diese Datei ist die Seite offen.**
+- **Einrichten/ändern:** `kern/zugang-einrichten.html` öffnen (nach Anmeldung), Benutzername und Passwort wählen, die erzeugte Datei `zugang-daten.js`
+  in `kern/` legen, committen, pushen. Die Datei enthält nur Prüfwerte, nie Passwörter. **Ohne diese Datei ist die Seite offen.**
+- **Mehrere Zugänge:** Ein neuer Zugang wird zu den bestehenden hinzugefügt (Häkchen „ersetzen“ überschreibt alle). Jeder Eintrag `{"n":"Name","h":"Prüfwert"}` lässt sich in `zugang-daten.js` löschen – dann ist dieser Zugang nach dem Push gesperrt, auch wenn das Gerät „angemeldet bleiben“ hatte.
+  Das Sichern der Musterlösung braucht zusätzlich einen GitHub-Token; ohne ihn kann eine Testperson nichts im Repository ändern.
 - **Angemeldet bleiben:** Häkchen im Anmeldefenster (Standard: an). Auf fremden Rechnern abwählen oder danach eine beliebige Seite mit `?abmelden` öffnen (entfernt auch den gespeicherten GitHub-Token).
 - **Grenze:** Das ist ein Sichtschutz im Browser, kein Serverschutz. Wer die Dateien direkt abruft (z. B. im öffentlichen Repository), sieht sie trotzdem –
   auch die Schulbuch-Bilder. Für echten Schutz braucht es einen Server mit Anmeldung (z. B. Cloudflare Access) oder ein privates Hosting.

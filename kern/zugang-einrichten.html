@@ -8,10 +8,11 @@ label{display:grid;gap:4px;font-size:14px}input,textarea{font:inherit;padding:8p
 button,.dl{font:inherit;padding:9px 14px;border:0;border-radius:6px;background:#245c89;color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
 textarea{width:100%;font-family:Consolas,monospace;font-size:13px}#aus{display:none}.hinweis{font-size:14px;color:#44546a}</style></head>
 <body><main><h1>Zugang einrichten</h1>
-<p class="hinweis">Wähle Benutzername und Passwort. Aus beiden wird ein Prüfwert berechnet – das Passwort selbst wird nirgends gespeichert oder gesendet. Die erzeugte Datei kommt nach <code>kern/</code>.</p>
+<p class="hinweis">Wähle Benutzername und Passwort. Aus beiden wird ein Prüfwert berechnet – das Passwort selbst wird nirgends gespeichert oder gesendet. Ein neuer Zugang wird zu den bestehenden <b>hinzugefügt</b> (du bist ja schon angemeldet); die erzeugte Datei ersetzt <code>kern/zugang-daten.js</code>. Einen Zugang entfernen: seinen Eintrag <code>{"n":…,"h":…}</code> in der Datei löschen.</p>
 <form id="f"><label>Benutzername<input name="username" autocomplete="username" required></label>
 <label>Passwort (mindestens 10 Zeichen)<input name="password" type="password" autocomplete="new-password" minlength="10" required></label>
 <label>Passwort wiederholen<input name="pw2" type="password" autocomplete="new-password" minlength="10" required></label>
+<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="ersetzen"> Alle bisherigen Zugänge ersetzen (statt hinzufügen)</label>
 <button>Prüfwert erzeugen</button><p id="fehler" style="color:#c32e2e;margin:0"></p></form>
 <div id="aus"><p>1. Datei speichern und in den Ordner <code>kern/</code> legen (bestehende ersetzen):</p>
 <p><a class="dl" id="dl" download="zugang-daten.js">zugang-daten.js herunterladen</a></p>
@@ -20,8 +21,12 @@ textarea{width:100%;font-family:Consolas,monospace;font-size:13px}#aus{display:n
 <script>
 f.onsubmit=async e=>{e.preventDefault();fehler.textContent='';
  if(f.password.value!==f.pw2.value){fehler.textContent='Die Passwörter sind nicht gleich.';return;}
- const salt=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,'0')).join(''),iter=200000;
+ const alt=window.ZUGANG,neuHex=n=>[...crypto.getRandomValues(new Uint8Array(n))].map(x=>x.toString(16).padStart(2,'0')).join('');
+ const behalten=alt&&!f.ersetzen.checked;
+ const salt=behalten?alt.salt:neuHex(16),iter=behalten?alt.iter:200000;
+ const liste=behalten?(alt.hashes||[alt.hash]).map(x=>typeof x==='string'?{n:'Zugang',h:x}:x):[];
  const hash=await Zugang.ableiten(f.username.value,f.password.value,salt,iter);
- const t='window.ZUGANG = '+JSON.stringify({v:1,salt,iter,hash})+';\n';
+ if(!liste.some(x=>x.h===hash))liste.push({n:f.username.value.trim(),h:hash});
+ const t='window.ZUGANG = '+JSON.stringify({v:2,salt,iter,hashes:liste})+';\n';
  text.value=t;dl.href=URL.createObjectURL(new Blob([t],{type:'text/javascript'}));aus.style.display='block';};
 </script></body></html>

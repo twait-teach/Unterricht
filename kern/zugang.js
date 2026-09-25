@@ -1,7 +1,7 @@
 /* Zugang: Benutzername + Passwort vor jeder Seite (Sichtschutz).
    ACHTUNG: Das ist ein Schutz im Browser, kein echter Serverschutz. Er hält Unbeteiligte ab, die zufällig die Adresse
    öffnen. Wer die Dateien direkt abruft (z. B. im öffentlichen GitHub-Repository), sieht sie trotzdem.
-   Zugangsdaten: kern/zugang-daten.js (nur ein Prüfwert, nie das Passwort) – erzeugt mit kern/zugang-einrichten.html.
+   Zugangsdaten: kern/zugang-daten.js (nur Prüfwerte, nie Passwörter; mehrere Zugänge möglich) – erzeugt mit kern/zugang-einrichten.html.
    Fehlt diese Datei, ist die Seite offen. Abmelden (entfernt auch den gespeicherten GitHub-Token): beliebige Seite mit ?abmelden öffnen. */
 'use strict';
 (() => {
@@ -11,12 +11,15 @@
   const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
   const bytes = h => Uint8Array.from(h.match(/../g) || [], x => parseInt(x, 16));
 
+  // Erlaubte Prüfwerte: neues Format { hashes: [{n, h}] } oder altes Format { hash }.
+  const erlaubt = cfg => (cfg.hashes || [cfg.hash]).map(x => (x && x.h) || x).filter(Boolean);
+
   async function ableiten(benutzer, passwort, salt, iter) {
     const roh = new TextEncoder().encode(benutzer.trim().toLowerCase() + '\n' + passwort);
     const k = await crypto.subtle.importKey('raw', roh, 'PBKDF2', false, ['deriveBits']);
     return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: bytes(salt), iterations: iter }, k, 256));
   }
-  window.Zugang = { ableiten };
+  window.Zugang = { ableiten, erlaubt };
 
   if (/[?&]abmelden\b/.test(location.search)) { try { localStorage.removeItem(KEY); sessionStorage.removeItem(KEY); localStorage.removeItem('unterricht-github-token'); } catch { /* egal */ } }
 
@@ -50,7 +53,7 @@
         e.preventDefault(); fehler.textContent = '';
         try {
           const h = await ableiten(f.username.value, f.password.value, cfg.salt, cfg.iter);
-          if (h !== cfg.hash) { fehler.textContent = 'Benutzername oder Passwort stimmt nicht.'; f.password.select(); return; }
+          if (!erlaubt(cfg).includes(h)) { fehler.textContent = 'Benutzername oder Passwort stimmt nicht.'; f.password.select(); return; }
           (f.merken.checked ? localStorage : sessionStorage).setItem(KEY, h);
           location.reload();
         } catch { fehler.textContent = 'Anmeldung nicht möglich (Browser ohne Krypto-Funktion oder Speicher gesperrt).'; }
@@ -64,7 +67,7 @@
   s.onload = () => {
     const cfg = window.ZUGANG;
     if (!cfg) return frei();
-    if (gemerkt() === cfg.hash) return frei();
+    if (erlaubt(cfg).includes(gemerkt())) return frei();
     formular(cfg);
   };
   s.onerror = () => { console.warn('Zugang: kern/zugang-daten.js fehlt – die Seite ist ohne Passwort offen.'); frei(); };

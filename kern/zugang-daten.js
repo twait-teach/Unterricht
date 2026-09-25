@@ -1,1 +1,1 @@
-window.ZUGANG = {"v":1,"salt":"64efac787732ce23dac3bc7abbbb5f46","iter":200000,"hash":"930b5b38a090ab0fb6fcc29319b34886cf521cd348a865e760d9b9633dadd6ff"};
+window.ZUGANG = {"v":2,"salt":"64efac787732ce23dac3bc7abbbb5f46","iter":200000,"hashes":[{"n":"Hauptzugang","h":"930b5b38a090ab0fb6fcc29319b34886cf521cd348a865e760d9b9633dadd6ff"},{"n":"gast","h":"6f7fb3eaf13b084ccaa488909b1ad0a07c439b0e7f9b80605329d34f8e100319"},{"n":"Schilli","h":"f5844bcfdcd939ad36e5788f6a5a6043643b6c28a11a90a3a8105e0880e6b46f"}]};
