@@ -44,8 +44,8 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 .textblock{line-height:1.45}
 .tafelansicht .textblock,.tafelansicht .merksatz{font-size:var(--s);line-height:1.3;text-wrap:pretty}
 .textblock .bruch,.merksatz .bruch{font-size:.75em;line-height:1.05}   /* Brüche im Fließtext: klein genug, um die Zeile nicht zu dehnen */
-.z{color:#20773b}.n{color:#174fa1}.w{color:#c32e2e} /* Zähler grün, Nenner blau, Wert rot */
-.g{color:#174fa1}.t{color:#c32e2e}.a{color:#20773b} /* Anteil gesucht: Ganzes blau, Bruchteil rot, Anteil grün */
+/* Textfarben = Stiftfarben; die Bedeutung (z. B. Zähler/Nenner) legt jedes Blatt selbst fest */
+.rot{color:#c32e2e}.blau{color:#174fa1}.gruen{color:#20773b}
 .textblock.loesung{border-left:4px dotted #8e9ca9;padding-left:.7em}
 .bruch{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;font-family:var(--serif);font-style:italic;line-height:1.2}
 .bruch>:first-child{border-bottom:1px solid;padding-bottom:1px}

@@ -86,7 +86,7 @@ Pfade `../../../kern/…` ggf. an die Ordnertiefe anpassen.
 Für alle Bausteine: `titel`, `phase="1 2"` (in welchen Unterrichtsphasen sichtbar; ohne = immer),
 `druckbreite="150mm"`, `druck-titel="nein"`, `nur="tafel"` bzw. `nur="druck"`, `id` (fester Name der Schreibfläche).
 Randnotizen sind standardmäßig zu (Knopf „Notizen“ in der Leiste) und liegen aufgeklappt über dem Blatt – das Blatt verschiebt sich nie. Die Leiste hat zwei Zeilen. Textblöcke haben in jeder Phase dieselbe Breite (kein Springen); nur Schreibflächen werden in die Resthöhe eingepasst.
-Zusätzlich: `tafel-titel="nein"` (Titel nur im Druck); `oben` am `<ab-blatt>` ist überflüssig (alles steht immer oben). Bild-/Tabellen-/Versuchsblöcke: `breite="60"` (in % der Blattbreite; Handschrift skaliert mit) macht sie kleiner und spart Höhe, sodass die Kästchen größer werden. Am `<ab-blatt>`: `titel-aus="3"` blendet die Blattüberschrift ab Phase 3 aus (nur Tafelansicht); der Platz kommt dem Inhalt zugute und die Kästchen können größer werden. Farben im Text: `class="z"` (Zähler, grün), `n` (Nenner, blau), `w` (Wert, rot).
+Zusätzlich: `tafel-titel="nein"` (Titel nur im Druck); `oben` am `<ab-blatt>` ist überflüssig (alles steht immer oben). Bild-/Tabellen-/Versuchsblöcke: `breite="60"` (in % der Blattbreite; Handschrift skaliert mit) macht sie kleiner und spart Höhe, sodass die Kästchen größer werden. Am `<ab-blatt>`: `titel-aus="3"` blendet die Blattüberschrift ab Phase 3 aus (nur Tafelansicht); der Platz kommt dem Inhalt zugute und die Kästchen können größer werden. Farben im Text: `class="rot"`, `blau`, `gruen` (wie die Stiftfarben). Was eine Farbe bedeutet (z. B. Zähler grün), entscheidet das jeweilige Blatt bzw. der Skill – nicht die Engine. Textstil `stil="loesung"` (gepunkteter Rand links) für Lösungstext.
 `verhaeltnis` = Breite : Höhe (nur noch für Bilder/Versuch/Tabelle; Karo und Streifen rechnen in Kästchen). Brüche: `<span class="bruch"><span>F</span><span>q</span></span>`.
 
 **Wichtig:** Wird ein Baustein umbenannt, geht die gespeicherte Handschrift darauf verloren,
@@ -143,3 +143,10 @@ Für eine Änderung nur die betroffene Datei hochladen bzw. nennen, z. B.:
 „Hier ist `physik/klasse-9/02-mechanische-energie/kapitel.js` – ergänze das Arbeitsblatt X.“
 Neues Tafelbild: Bilder + Überschriften + Stichpunkte liefern, Claude schreibt nur die Tafelbild-Datei.
 Den Ordner `kern/` bei Inhaltsänderungen nicht mitschicken.
+
+## GeoGebra-Dateien
+- **Immer mit der Classic-App bauen** (mächtigste Web-App); der Grafikrechner kennt z. B. keine Vielecke/Strecken und lehnt solche Dateien ab.
+- Werkzeug und Beispiel: `werkzeuge/geogebra/` (Befehlsdatei + `bauen.py`, baut per GeoGebra-Web-App in Chromium, speichert Screenshots und die `.ggb`).
+- Schrittweises Einblenden: Kontrollkästchen (`Checkbox`) + `SetConditionToShowObject`; beim Speichern alle auf „aus“.
+- **Texte nicht mit `Text(...)` erzeugen**, sondern als freie Texte (`t="..."`) mit LaTeX-Schalter – sonst geht LaTeX nach dem Speichern verloren.
+- **Immer die gespeicherte Datei neu laden und dann prüfen**, nicht nur den Zustand direkt nach dem Bauen.
