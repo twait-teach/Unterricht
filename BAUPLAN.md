@@ -163,3 +163,4 @@ Den Ordner `kern/` bei Inhaltsänderungen nicht mitschicken.
 - **Lineal:** Mitte ziehen = verschieben, runder Griff oder zwei Finger = drehen; ein Strich, der an der Kante beginnt, wird eine Gerade. Skala: 1 cm = 2 Kästchen (wie im Druck).
 - **Zurück zur alten Engine:** `?klassisch` an die Adresse hängen schaltet die neuen Funktionen ab. Vollständig zurück: `kern/tafel-v14.js` und `kern/tafel-v14.css` über `tafel.js` / `tafel.css` kopieren, oder in GitHub Desktop unter „History“ den Commit mit Rechtsklick „Revert changes in commit“.
 - **Stift prüfen:** `werkzeuge/stift-test.html` zeigt, was das Gerät für Druck, Radierer-Ende und Stifttaste meldet.
+- **Stift-Info (Fehlersuche):** Klick auf die Versionsangabe unten rechts zeigt bei jedem Stiftkontakt `button`, `buttons` und Druck in der Statuszeile (Radierer-Ende: `button=5`, `buttons=32`). Noch mal klicken schaltet es aus.

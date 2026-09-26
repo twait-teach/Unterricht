@@ -11,7 +11,7 @@
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
   const SKRIPT_V = ((document.currentScript && document.currentScript.src.match(/[?&]v=([^&]+)/)) || [0, ''])[1];   // Versionsnummer aus dem Script-Link; hängt sich an die GeoGebra-Datei, damit der Browser sie nicht veraltet aus dem Cache nimmt
-  const MOTOR = 'Motor 26.09.-15 (Stift+)';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const MOTOR = 'Motor 26.09.-16 (Stift+)';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
   const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
@@ -385,6 +385,7 @@
     }
     return innen;
   };
+  const radierNun = e => PLUS && e.pointerType === 'pen' && (e.buttons & 32) > 0;   // Radierer-Flag während der Bewegung
   const radierEnde = e => PLUS && e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32) > 0);   // Rückseite des Surface Pen
 
   function starte(f, e, m, global) {
@@ -411,6 +412,10 @@
     const f = aktiv.f, m = aktiv.m;
     const events = e.getCoalescedEvents?.().length ? e.getCoalescedEvents() : [e];
     for (const ev of events) {
+      if (aktiv.m === 'stift' && radierNun(ev)) {   // Stift wurde umgedreht: angefangenen Strich verwerfen und radieren
+        eigen[f.id].pop(); aktiv.m = 'radierer'; aktiv.ende = true; aktiv.sn = null; geaendert = true;
+      }
+      if (aktiv.m === 'radierer') { radiere(f, punkt(ev, f.svg), aktiv.ende ? 17 : 13); continue; }
       if (m === 'stift') {
         const s = eigen[f.id].at(-1);
         if (aktiv.sn) { const q = lineal.projiziere(ev.clientX, ev.clientY, aktiv.sn); s.p = [s.p[0], punktXY(q[0], q[1], f.svg)]; }
@@ -460,6 +465,13 @@
     });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) f.svg.addEventListener(t, e => { if (!aktiv || !aktiv.global) beende(e); });
   }
+  // Stift-Info: Klick auf die Versionsangabe unten rechts zeigt für jeden Stiftkontakt, was der Browser meldet
+  let stiftInfo = false, letzteTasten = null;
+  stempel.style.cursor = 'pointer';
+  stempel.onclick = () => { stiftInfo = !stiftInfo; melde(stiftInfo ? 'Stift-Info an: Stift aufsetzen' : 'Stift-Info aus'); };
+  const infoText = e => 'Stift-Info: ' + e.pointerType + ' · button=' + e.button + ' · buttons=' + e.buttons + ' · Druck=' + (e.pressure || 0).toFixed(2);
+  addEventListener('pointerdown', e => { if (stiftInfo && e.pointerType !== 'mouse') { melde(infoText(e)); letzteTasten = e.buttons; } }, true);
+  addEventListener('pointermove', e => { if (stiftInfo && e.pointerType !== 'mouse' && e.buttons && e.buttons !== letzteTasten) { melde(infoText(e)); letzteTasten = e.buttons; } }, true);
   // Radierer-Ende des Stifts funktioniert auch im Modus „Bedienen“ (dort nimmt die Schreibfläche sonst nichts an)
   addEventListener('pointerdown', e => {
     if (!PLUS || aktiv || modus !== 'bedienen' || !radierEnde(e)) return;
@@ -474,7 +486,7 @@
   // Ein Lineal als Ebene über der Folie (in Bildschirmpixeln). Verschieben: mit dem Finger (oder Maus) in der Mitte ziehen;
   // drehen: am runden Griff ziehen oder mit zwei Fingern. Ein Strich, der an einer Längskante beginnt, wird zur Geraden an der Kante.
   const lineal = (() => {
-    const svg = document.createElementNS(NS, 'svg'); svg.classList.add('lineal'); svg.hidden = true;
+    const svg = document.createElementNS(NS, 'svg'); svg.classList.add('lineal'); svg.style.display = 'none';
     const g = document.createElementNS(NS, 'g'); svg.append(g);
     const z = { x: 0, y: 0, w: 0, an: false, L: 0, H: 0, zp: 40 };
     const KANTE = 16;
@@ -552,7 +564,7 @@
     }, true);
     for (const t of ['pointerup', 'pointercancel']) addEventListener(t, e => { if (finger.has(e.pointerId)) { finger.delete(e.pointerId); if (finger.size < 2 && art === 'zwei') art = finger.size ? 'schieben' : null; if (!finger.size) art = null; } }, true);
     function umschalten(an) {
-      z.an = an; svg.hidden = !an;
+      z.an = an; svg.style.display = an ? '' : 'none';
       if (an) { if (!svg.isConnected) document.body.append(svg); if (!z.x && !z.y) { z.zp = zellePx(); z.x = innerWidth / 2 - 12 * z.zp; z.y = (innerHeight - leiste.offsetHeight) / 2; } bau(); }
     }
     return { get an() { return z.an; }, umschalten, neuBauen: () => { if (z.an) bau(); }, schnapp, projiziere };
