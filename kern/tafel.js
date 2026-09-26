@@ -11,7 +11,7 @@
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
   const SKRIPT_V = ((document.currentScript && document.currentScript.src.match(/[?&]v=([^&]+)/)) || [0, ''])[1];   // Versionsnummer aus dem Script-Link; hängt sich an die GeoGebra-Datei, damit der Browser sie nicht veraltet aus dem Cache nimmt
-  const MOTOR = 'Motor 26.09.-13';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const MOTOR = 'Motor 26.09.-14';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
   const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
