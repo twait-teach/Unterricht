@@ -155,3 +155,11 @@ Den Ordner `kern/` bei Inhaltsänderungen nicht mitschicken.
 ## Musterlösungen bei Änderungen
 - Wird ein Blatt geändert, wird seine Musterlösung **gelöscht** (`<blatt>.loesung.js` durch eine leere Datei ersetzen), nie angepasst oder „gültig gehalten“. Der Lehrer schreibt sie danach neu und sichert sie.
 - Karofeld mit GeoGebra daneben: `<ab-karo geogebra="datei.ggb" spalten-tafel="16" hoehe="470" zeilen="10" zeilen-druck="12">` – links GeoGebra, rechts Karo (16 Kästchen breit); im Druck nur das Karo in voller Breite. GeoGebra-Datei für 832 × 470 bauen.
+
+## Stift-Funktionen (Motor -15, „Stift+“)
+- **Druck:** Der Stiftdruck wird je Punkt gespeichert (`[x, y, Druck]`) und als Strichbreite gezeichnet (Regler „Druck“, „Stärke“ in der Leiste, pro Gerät gemerkt). Maus und Finger zeichnen unverändert.
+- **Radierer-Ende des Surface Pen** radiert (`button 5` / `buttons & 32`), auch im Modus „Bedienen“.
+- **Auswahl:** Schlinge ziehen fängt eigene Striche ein und verschiebt sie; Tippen wählt einen Strich; „Auswahl löschen“ oder Entf.
+- **Lineal:** Mitte ziehen = verschieben, runder Griff oder zwei Finger = drehen; ein Strich, der an der Kante beginnt, wird eine Gerade. Skala: 1 cm = 2 Kästchen (wie im Druck).
+- **Zurück zur alten Engine:** `?klassisch` an die Adresse hängen schaltet die neuen Funktionen ab. Vollständig zurück: `kern/tafel-v14.js` und `kern/tafel-v14.css` über `tafel.js` / `tafel.css` kopieren, oder in GitHub Desktop unter „History“ den Commit mit Rechtsklick „Revert changes in commit“.
+- **Stift prüfen:** `werkzeuge/stift-test.html` zeigt, was das Gerät für Druck, Radierer-Ende und Stifttaste meldet.

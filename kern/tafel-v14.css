@@ -106,13 +106,3 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 .reihe .flaeche{flex:none}
 .reihe .ggb{flex:1;min-width:0}
 .druckansicht .reihe .flaeche{width:100%}
-
-/* Neue Stiftfunktionen: Auswahl, Lineal, Regler */
-[data-modus=auswahl] .tinte{pointer-events:auto;touch-action:none;cursor:default}
-.tafelansicht .bogen{touch-action:none}
-.regler{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--kopftext);white-space:nowrap}
-.regler input{width:72px}
-.lineal{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:6;pointer-events:none;overflow:visible}
-.lineal[hidden]{display:none}
-.druckansicht .lineal{display:none}
-@media print{.lineal{display:none}}

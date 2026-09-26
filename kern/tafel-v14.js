@@ -11,7 +11,7 @@
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
   const SKRIPT_V = ((document.currentScript && document.currentScript.src.match(/[?&]v=([^&]+)/)) || [0, ''])[1];   // Versionsnummer aus dem Script-Link; hängt sich an die GeoGebra-Datei, damit der Browser sie nicht veraltet aus dem Cache nimmt
-  const MOTOR = 'Motor 26.09.-15 (Stift+)';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const MOTOR = 'Motor 26.09.-14';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
   const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
@@ -255,10 +255,6 @@
   // Phasen: aus den phase-Attributen der Bausteine
   const phasen = [...new Set(panels.flatMap(p => p.phasen))].sort((a, b) => a - b);
 
-  // Neue Stiftfunktionen (Druck, Radierer-Ende, Auswahl, Lineal); mit ?klassisch in der Adresse zum Vergleich abschaltbar.
-  const PLUS = !/[?&]klassisch\b/.test(location.search);
-  const EINST = { staerke: 1, druck: 0.6 };   // Strichstärke (Faktor) und Druckempfindlichkeit (0 = aus … 1 = stark)
-  try { Object.assign(EINST, JSON.parse(localStorage.getItem('tafel:stift')) || {}); } catch { /* Standardwerte */ }
   // ---------- Werkzeugleiste ----------
   const leiste = el('nav', 'leiste');
   const zurueck = el('a', 'zurueck', '←'); zurueck.title = 'Zur Übersicht';
@@ -267,14 +263,6 @@
   const gruppe = (...k) => { const g = el('div', 'gruppe'); g.append(...k); return g; };
   const bTafel = knopf('Tafel'), bDruck = knopf('Druckansicht');
   const bBedienen = knopf('Bedienen'), bStift = knopf('Schreiben'), bRadierer = knopf('Radieren');
-  const bAuswahl = knopf('Auswahl', 'Striche mit einer Schlinge einfangen und verschieben – Tippen wählt einen einzelnen Strich');
-  const bAuswLoe = knopf('Auswahl löschen', 'Ausgewählte Striche löschen (Taste Entf)'); bAuswLoe.disabled = true;
-  const bLineal = knopf('Lineal', 'Lineal ein-/ausblenden: Mitte ziehen = verschieben, runder Griff oder zwei Finger = drehen; Striche an der Kante werden gerade');
-  const regler = (text, titel, min, max, step, wert, cb) => {
-    const l = el('label', 'regler'); l.title = titel; const i = el('input'); i.type = 'range'; i.min = min; i.max = max; i.step = step; i.value = wert;
-    i.oninput = () => { cb(+i.value); try { localStorage.setItem('tafel:stift', JSON.stringify(EINST)); } catch { /* egal */ } };
-    l.append(text + ' ', i); return l;
-  };
   const bZurueck = knopf('↶', 'Letzten Strich rückgängig'), bLeeren = knopf('⌫', 'Alle eigenen Anmerkungen löschen');
   const farbKnoepfe = FARBEN.map(([c, n]) => { const b = knopf('<span></span>', n, 'farbe'); b.style.setProperty('--farbe', c); b.farbe = c; return b; });
   const phasenKnoepfe = phasen.map((p, i) => { const b = knopf((i + 1) + ' ' + (phasenNamen[i] || 'Phase ' + p)); b.phase = p; return b; });
@@ -285,8 +273,8 @@
   // Zwei Zeilen: oben Phasen, Notizen, Musterlösung – unten Ansicht, Werkzeuge, Farben, Vollbild/Drucken
   const zeile = (...k) => { const z = el('div', 'zeile'); z.append(...k); return z; };
   leiste.append(
-    zeile(zurueck, ...(phasenKnoepfe.length ? [gruppe(...phasenKnoepfe)] : []), gruppe(bNotizen), gruppe(bLoesung, bSichern), ...(PLUS ? [gruppe(regler('Stärke', 'Strichstärke der neuen Striche', .6, 2.5, .1, EINST.staerke, v => EINST.staerke = v), regler('Druck', 'Wie stark der Stiftdruck die Strichbreite ändert (0 = aus)', 0, 1, .05, EINST.druck, v => EINST.druck = v), bAuswLoe)] : [])),
-    zeile(gruppe(bTafel, bDruck), gruppe(bBedienen, bStift, bRadierer, ...(PLUS ? [bAuswahl, bLineal] : []), bZurueck, bLeeren), gruppe(...farbKnoepfe), gruppe(bVoll, bDrucken), status, stempel));
+    zeile(zurueck, ...(phasenKnoepfe.length ? [gruppe(...phasenKnoepfe)] : []), gruppe(bNotizen), gruppe(bLoesung, bSichern)),
+    zeile(gruppe(bTafel, bDruck), gruppe(bBedienen, bStift, bRadierer, bZurueck, bLeeren), gruppe(...farbKnoepfe), gruppe(bVoll, bDrucken), status, stempel));
 
   if (blatt.hasAttribute('oben')) document.body.classList.add('oben');   // Bausteine oben ausrichten statt mittig
   blatt.replaceWith(bogen);
@@ -318,274 +306,78 @@
   const melde = t => { status.textContent = t; status.title = t; };
 
   // ---------- Stift ----------
-  // PLUS = neue Stiftfunktionen (Druck, Radierer-Ende, Auswahl, Lineal). Mit ?klassisch in der Adresse werden sie zum
-  // Vergleich abgeschaltet; die frühere Fassung des Motors liegt unverändert als tafel-v14.js/-css daneben.
   let modus = 'bedienen', farbe = FARBEN[0][0], aktiv = null, geaendert = false;
   const verlauf = [];
-  const BASIS = 3.2;   // Strichstärke in Koordinateneinheiten (wie tafel.css .tinte)
-  let sel = null;   // Auswahl: { f, s: [Striche] }
   const pfad = p => p.map((q, i) => (i ? 'L' : 'M') + q[0] + ',' + q[1]).join('') + (p.length === 1 ? 'l.01 .01' : '');
-  // Ein Strich (Punkte [x, y] oder [x, y, Druck]) wird als ein Pfad gezeichnet; hat er Druckwerte, in Stücke gleicher Breite zerlegt.
-  const breiteAn = (s, q) => BASIS * (s.w || 1) * (q[2] == null ? 1 : Math.max(.25, 1 + (s.e || 0) * (2 * q[2] - 1)));
-  function teile(s) {
-    if (!s.e || !s.p.some(q => q[2] != null) || s.p.length < 2) return [{ d: pfad(s.p), w: s.p.length === 1 && s.p[0][2] != null ? breiteAn(s, s.p[0]) : (s.w ? BASIS * s.w : 0) }];
-    const aus = []; let start = 0, wAlt = null;
-    for (let i = 1; i < s.p.length; i++) {
-      const w = Math.round((breiteAn(s, s.p[i - 1]) + breiteAn(s, s.p[i])) / 2 * 4) / 4;
-      if (wAlt !== null && w !== wAlt) { aus.push({ d: pfad(s.p.slice(start, i)), w: wAlt }); start = i - 1; }
-      wAlt = w;
-    }
-    aus.push({ d: pfad(s.p.slice(start)), w: wAlt });
-    return aus;
-  }
-  const grenzen = striche => {
-    const r = { x0: 1e9, y0: 1e9, x1: -1e9, y1: -1e9 };
-    for (const s of striche) for (const q of s.p) { r.x0 = Math.min(r.x0, q[0]); r.y0 = Math.min(r.y0, q[1]); r.x1 = Math.max(r.x1, q[0]); r.y1 = Math.max(r.y1, q[1]); }
-    return r;
-  };
 
   function zeichne(f) {
     f.svg.replaceChildren();
-    const mk = (tag, attr) => { const p = document.createElementNS(NS, tag); for (const k in attr) p.setAttribute(k, attr[k]); f.svg.append(p); return p; };
-    const strich = (s, extra = 0, farbeAlt) => { for (const t of teile(s)) mk('path', { d: t.d, stroke: farbeAlt || s.c, ...(t.w || extra ? { 'stroke-width': (t.w || BASIS) + extra } : {}), ...(farbeAlt ? { opacity: .35 } : {}) }); };
-    if (zeigeLoesung) for (const s of loesung[f.id] || []) strich(s);
-    const eig = eigen[f.id] || [];
-    if (sel && sel.f === f) for (const s of sel.s) strich(s, 8, '#4a9bff');
-    for (const s of eig) strich(s);
-    if (sel && sel.f === f && sel.s.length) {
-      const r = grenzen(sel.s), pad = 10;
-      mk('rect', { x: r.x0 - pad, y: r.y0 - pad, width: r.x1 - r.x0 + 2 * pad, height: r.y1 - r.y0 + 2 * pad, stroke: '#4a9bff', 'stroke-width': 2, 'stroke-dasharray': '8 6' });
+    for (const striche of [zeigeLoesung ? loesung[f.id] || [] : [], eigen[f.id] || []]) for (const s of striche) {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', pfad(s.p)); p.setAttribute('stroke', s.c);
+      f.svg.append(p);
     }
-    if (f.lasso && f.lasso.length > 1) mk('path', { d: pfad(f.lasso) + 'Z', stroke: '#4a9bff', 'stroke-width': 2, 'stroke-dasharray': '8 6', fill: 'rgba(74,155,255,.08)' });
   }
-  const punktXY = (x, y, svg) => {
-    const p = new DOMPoint(x, y).matrixTransform(svg.getScreenCTM().inverse());
+  function punkt(e, svg) {
+    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
     return [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10];
-  };
-  const punkt = (e, svg) => {
-    const p = punktXY(e.clientX, e.clientY, svg);
-    if (PLUS && e.pointerType === 'pen') p.push(Math.round(Math.min(1, Math.max(.05, e.pressure || .5)) * 100) / 100);
-    return p;
-  };
+  }
   function abstand(p, a, b) {
     const dx = b[0] - a[0], dy = b[1] - a[1], n = dx * dx + dy * dy;
     const t = n ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / n)) : 0;
     return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
   }
-  function radiere(f, p, r = 13) {
+  function radiere(f, p) {
     const vorher = eigen[f.id] || [];
-    const nachher = vorher.filter(s => !s.p.some((q, i) => abstand(p, q, s.p[Math.max(0, i - 1)]) < r));
+    const nachher = vorher.filter(s => !s.p.some((q, i) => abstand(p, q, s.p[Math.max(0, i - 1)]) < 13));
     if (nachher.length !== vorher.length) { eigen[f.id] = nachher; geaendert = true; zeichne(f); }
-  }
-  const imPolygon = (p, poly) => {
-    let innen = false;
-    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-      const a = poly[i], b = poly[j];
-      if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) innen = !innen;
-    }
-    return innen;
-  };
-  const radierEnde = e => PLUS && e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32) > 0);   // Rückseite des Surface Pen
-
-  function starte(f, e, m, global) {
-    verlauf.push(JSON.stringify(eigen)); if (verlauf.length > 60) verlauf.shift();
-    aktiv = { f, id: e.pointerId, m, global, pen: e.pointerType === 'pen', ende: radierEnde(e) };
-    geaendert = false;
-    const p = punkt(e, f.svg);
-    if (m === 'stift') {
-      const s = { p: [p], c: farbe };
-      if (PLUS && EINST.staerke !== 1) s.w = EINST.staerke;
-      if (PLUS && aktiv.pen && EINST.druck > 0) s.e = EINST.druck;
-      const sn = PLUS && lineal.an ? lineal.schnapp(e.clientX, e.clientY) : null;
-      if (sn) { aktiv.sn = sn; const q = lineal.projiziere(e.clientX, e.clientY, sn); s.p = [punktXY(q[0], q[1], f.svg)]; delete s.e; }
-      (eigen[f.id] ||= []).push(s); geaendert = true; zeichne(f);
-    } else if (m === 'radierer') radiere(f, p, aktiv.ende ? 17 : 13);
-    else if (m === 'auswahl') {
-      const b = sel && sel.f === f ? grenzen(sel.s) : null;
-      if (b && p[0] >= b.x0 - 10 && p[0] <= b.x1 + 10 && p[1] >= b.y0 - 10 && p[1] <= b.y1 + 10) aktiv.schiebe = p;
-      else { sel = null; aktiv.lasso = f.lasso = [p]; flaechen.forEach(zeichne); }
-      meldeAuswahl();
-    }
-  }
-  function bewege(e) {
-    const f = aktiv.f, m = aktiv.m;
-    const events = e.getCoalescedEvents?.().length ? e.getCoalescedEvents() : [e];
-    for (const ev of events) {
-      if (m === 'stift') {
-        const s = eigen[f.id].at(-1);
-        if (aktiv.sn) { const q = lineal.projiziere(ev.clientX, ev.clientY, aktiv.sn); s.p = [s.p[0], punktXY(q[0], q[1], f.svg)]; }
-        else s.p.push(punkt(ev, f.svg));
-      } else if (m === 'radierer') radiere(f, punkt(ev, f.svg), aktiv.ende ? 17 : 13);
-      else if (m === 'auswahl') {
-        const p = punkt(ev, f.svg);
-        if (aktiv.schiebe) {
-          const dx = p[0] - aktiv.schiebe[0], dy = p[1] - aktiv.schiebe[1];
-          for (const s of sel.s) for (const q of s.p) { q[0] = Math.round((q[0] + dx) * 10) / 10; q[1] = Math.round((q[1] + dy) * 10) / 10; }
-          aktiv.schiebe = p; geaendert = true;
-        } else aktiv.lasso.push(p);
-      }
-    }
-    if (m !== 'radierer') zeichne(f);
   }
   function beende(e) {
     if (!aktiv || (e && e.pointerId !== aktiv.id)) return;
-    const f = aktiv.f;
-    if (aktiv.m === 'auswahl' && aktiv.lasso) {
-      const poly = aktiv.lasso, r = grenzen([{ p: poly }]);
-      const eig = eigen[f.id] || [];
-      if (poly.length > 3 && Math.max(r.x1 - r.x0, r.y1 - r.y0) > 20) {
-        const drin = eig.filter(s => s.p.filter(q => imPolygon(q, poly)).length >= s.p.length / 2);
-        sel = drin.length ? { f, s: drin } : null;
-      } else {   // Tippen: den nächsten Strich wählen
-        const p = poly[0]; let best = null, bd = 16;
-        for (const s of eig) for (let i = 0; i < s.p.length; i++) { const d = abstand(p, s.p[i], s.p[Math.max(0, i - 1)]); if (d < bd) { bd = d; best = s; } }
-        sel = best ? { f, s: [best] } : null;
-      }
-      f.lasso = null; verlauf.pop(); flaechen.forEach(zeichne); meldeAuswahl();
-    } else if (geaendert) speichern(); else verlauf.pop();
+    if (geaendert) speichern(); else verlauf.pop();
     aktiv = null; geaendert = false;
   }
   for (const f of flaechen) {
     zeichne(f);
     f.svg.addEventListener('pointerdown', e => {
-      const m = radierEnde(e) ? 'radierer' : modus;
-      if (m === 'bedienen' || aktiv || (e.button !== 0 && !radierEnde(e))) return;
+      if (modus === 'bedienen' || aktiv || e.button !== 0) return;
       e.preventDefault();
-      try { f.svg.setPointerCapture(e.pointerId); } catch { /* z. B. bei künstlichen Ereignissen */ }
-      starte(f, e, m, false);
+      verlauf.push(JSON.stringify(eigen)); if (verlauf.length > 60) verlauf.shift();
+      aktiv = { f, id: e.pointerId }; geaendert = false;
+      f.svg.setPointerCapture(e.pointerId);
+      const p = punkt(e, f.svg);
+      if (modus === 'stift') { (eigen[f.id] ||= []).push({ p: [p], c: farbe }); geaendert = true; zeichne(f); }
+      else radiere(f, p);
     });
     f.svg.addEventListener('pointermove', e => {
-      if (!aktiv || aktiv.global || aktiv.id !== e.pointerId || aktiv.f !== f) return;
-      e.preventDefault(); bewege(e);
+      if (!aktiv || aktiv.id !== e.pointerId || aktiv.f !== f) return;
+      e.preventDefault();
+      const events = e.getCoalescedEvents?.().length ? e.getCoalescedEvents() : [e];
+      for (const ev of events) {
+        const p = punkt(ev, f.svg);
+        if (modus === 'stift') eigen[f.id].at(-1).p.push(p); else radiere(f, p);
+      }
+      if (modus === 'stift') zeichne(f);
     });
-    for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) f.svg.addEventListener(t, e => { if (!aktiv || !aktiv.global) beende(e); });
+    for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) f.svg.addEventListener(t, beende);
   }
-  // Radierer-Ende des Stifts funktioniert auch im Modus „Bedienen“ (dort nimmt die Schreibfläche sonst nichts an)
-  addEventListener('pointerdown', e => {
-    if (!PLUS || aktiv || modus !== 'bedienen' || !radierEnde(e)) return;
-    const f = flaechen.find(g => { if (!g.svg.getClientRects().length) return false; const r = g.svg.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; });
-    if (!f) return;
-    e.preventDefault(); e.stopPropagation(); starte(f, e, 'radierer', true);
-  }, true);
-  addEventListener('pointermove', e => { if (aktiv && aktiv.global && e.pointerId === aktiv.id) { e.preventDefault(); bewege(e); } }, true);
-  for (const t of ['pointerup', 'pointercancel']) addEventListener(t, e => { if (aktiv && aktiv.global) beende(e); }, true);
-
-  // ---------- Lineal ----------
-  // Ein Lineal als Ebene über der Folie (in Bildschirmpixeln). Verschieben: mit dem Finger (oder Maus) in der Mitte ziehen;
-  // drehen: am runden Griff ziehen oder mit zwei Fingern. Ein Strich, der an einer Längskante beginnt, wird zur Geraden an der Kante.
-  const lineal = (() => {
-    const svg = document.createElementNS(NS, 'svg'); svg.classList.add('lineal'); svg.hidden = true;
-    const g = document.createElementNS(NS, 'g'); svg.append(g);
-    const z = { x: 0, y: 0, w: 0, an: false, L: 0, H: 0, zp: 40 };
-    const KANTE = 16;
-    const zellePx = () => {
-      for (const f of flaechen) if (f.raster && f.svg.getClientRects().length) return f.svg.getScreenCTM().a * 1000 / SPALTEN;
-      return 40 * (parseFloat(getComputedStyle(document.body).getPropertyValue('--k')) || 1);
-    };
-    const el2 = (tag, attr, parent = g) => { const n = document.createElementNS(NS, tag); for (const k in attr) n.setAttribute(k, attr[k]); parent.append(n); return n; };
-    function bau() {
-      z.zp = zellePx(); z.L = 24 * z.zp; z.H = 2.6 * z.zp;
-      g.replaceChildren();
-      el2('rect', { x: 0, y: 0, width: z.L, height: z.H, rx: 4, fill: 'rgba(255,238,170,.62)', stroke: '#a58a2a', 'stroke-width': 1.5 });
-      for (let i = 0; i <= 24; i++) {
-        const gross = i % 2 === 0;
-        el2('line', { x1: i * z.zp, y1: 0, x2: i * z.zp, y2: (gross ? .5 : .28) * z.zp, stroke: '#5b4a10', 'stroke-width': gross ? 1.6 : 1 });
-        if (gross && i > 0 && i < 24) el2('text', { x: i * z.zp, y: .95 * z.zp, 'text-anchor': 'middle', 'font-size': Math.max(10, .36 * z.zp), fill: '#5b4a10', 'font-family': 'Calibri,Carlito,sans-serif' }).textContent = i / 2;
-      }
-      el2('text', { x: .25 * z.zp, y: 1.6 * z.zp, 'font-size': Math.max(10, .3 * z.zp), fill: '#7a6620', 'font-family': 'Calibri,Carlito,sans-serif' }).textContent = 'cm (2 Kästchen)';
-      el2('circle', { cx: z.L - 1.1 * z.zp, cy: z.H / 2, r: .55 * z.zp, fill: '#fff5cc', stroke: '#a58a2a', 'stroke-width': 1.5 });
-      el2('text', { x: z.L - 1.1 * z.zp, y: z.H / 2 + .2 * z.zp, 'text-anchor': 'middle', 'font-size': .6 * z.zp, fill: '#5b4a10' }).textContent = '↻';
-      setze();
-    }
-    const setze = () => g.setAttribute('transform', `translate(${z.x} ${z.y}) rotate(${z.w})`);
-    const lokal = (cx, cy) => { const r = z.w * Math.PI / 180, dx = cx - z.x, dy = cy - z.y; return [dx * Math.cos(r) + dy * Math.sin(r), -dx * Math.sin(r) + dy * Math.cos(r)]; };
-    const global = (lx, ly) => { const r = z.w * Math.PI / 180; return [z.x + lx * Math.cos(r) - ly * Math.sin(r), z.y + lx * Math.sin(r) + ly * Math.cos(r)]; };
-    function zone(cx, cy) {
-      const [lx, ly] = lokal(cx, cy);
-      if (lx < -6 || lx > z.L + 6 || ly < -6 || ly > z.H + 6) return null;
-      if (Math.hypot(lx - (z.L - 1.1 * z.zp), ly - z.H / 2) < .7 * z.zp) return 'drehen';
-      if (ly < KANTE || ly > z.H - KANTE) return 'kante';
-      return 'schieben';
-    }
-    function schnapp(cx, cy) {
-      const [lx, ly] = lokal(cx, cy);
-      if (lx < -6 || lx > z.L + 6) return null;
-      if (Math.abs(ly) < KANTE) return { y0: 0 };
-      if (Math.abs(ly - z.H) < KANTE) return { y0: z.H };
-      return null;
-    }
-    function projiziere(cx, cy, sn) { const [lx] = lokal(cx, cy); return global(Math.max(0, Math.min(z.L, lx)), sn.y0); }
-    function dreheUm(px, py, dw) {   // Lineal um den Punkt (px, py) um dw Grad drehen
-      const r = dw * Math.PI / 180, dx = z.x - px, dy = z.y - py;
-      z.x = px + dx * Math.cos(r) - dy * Math.sin(r); z.y = py + dx * Math.sin(r) + dy * Math.cos(r); z.w += dw;
-    }
-    // Bedienung
-    const finger = new Map();   // pointerId → letzte Position
-    let art = null;
-    addEventListener('pointerdown', e => {
-      if (!z.an) return;
-      if (finger.size && e.pointerType === 'touch') { finger.set(e.pointerId, [e.clientX, e.clientY]); art = 'zwei'; e.preventDefault(); e.stopPropagation(); return; }
-      const zn = zone(e.clientX, e.clientY);
-      if (!zn || zn === 'kante') return;
-      if (e.pointerType === 'pen' && modus !== 'bedienen') return;
-      e.preventDefault(); e.stopPropagation();
-      finger.set(e.pointerId, [e.clientX, e.clientY]); art = zn;
-    }, true);
-    addEventListener('pointermove', e => {
-      if (!z.an || !finger.has(e.pointerId)) return;
-      e.preventDefault(); e.stopPropagation();
-      const alt = finger.get(e.pointerId), neu = [e.clientX, e.clientY];
-      if (art === 'schieben') { z.x += neu[0] - alt[0]; z.y += neu[1] - alt[1]; }
-      else if (art === 'drehen') {
-        const m = global(z.L / 2, z.H / 2), a0 = Math.atan2(alt[1] - m[1], alt[0] - m[0]), a1 = Math.atan2(neu[1] - m[1], neu[0] - m[0]);
-        let dw = (a1 - a0) * 180 / Math.PI; if (dw > 180) dw -= 360; if (dw < -180) dw += 360;
-        dreheUm(m[0], m[1], dw);
-      } else if (art === 'zwei' && finger.size >= 2) {
-        const ids = [...finger.keys()].slice(0, 2), P = ids.map(i => finger.get(i));
-        const Q = ids.map(i => i === e.pointerId ? neu : finger.get(i));
-        const m0 = [(P[0][0] + P[1][0]) / 2, (P[0][1] + P[1][1]) / 2], m1 = [(Q[0][0] + Q[1][0]) / 2, (Q[0][1] + Q[1][1]) / 2];
-        let dw = (Math.atan2(Q[1][1] - Q[0][1], Q[1][0] - Q[0][0]) - Math.atan2(P[1][1] - P[0][1], P[1][0] - P[0][0])) * 180 / Math.PI;
-        if (dw > 180) dw -= 360; if (dw < -180) dw += 360;
-        dreheUm(m0[0], m0[1], dw); z.x += m1[0] - m0[0]; z.y += m1[1] - m0[1];
-      }
-      finger.set(e.pointerId, neu); setze();
-    }, true);
-    for (const t of ['pointerup', 'pointercancel']) addEventListener(t, e => { if (finger.has(e.pointerId)) { finger.delete(e.pointerId); if (finger.size < 2 && art === 'zwei') art = finger.size ? 'schieben' : null; if (!finger.size) art = null; } }, true);
-    function umschalten(an) {
-      z.an = an; svg.hidden = !an;
-      if (an) { if (!svg.isConnected) document.body.append(svg); if (!z.x && !z.y) { z.zp = zellePx(); z.x = innerWidth / 2 - 12 * z.zp; z.y = (innerHeight - leiste.offsetHeight) / 2; } bau(); }
-    }
-    return { get an() { return z.an; }, umschalten, neuBauen: () => { if (z.an) bau(); }, schnapp, projiziere };
-  })();
-  const meldeAuswahl = () => { bAuswLoe.disabled = !(sel && sel.s.length); };
 
   // ---------- Bedienung ----------
   const druecke = (liste, aktivKnopf) => liste.forEach(b => b.setAttribute('aria-pressed', b === aktivKnopf));
   function setzeModus(m) {
     beende(); modus = m;
-    if (m !== 'auswahl' && sel) { sel = null; flaechen.forEach(zeichne); meldeAuswahl(); }
     document.body.dataset.modus = m;
-    druecke([bBedienen, bStift, bRadierer, bAuswahl], { bedienen: bBedienen, stift: bStift, radierer: bRadierer, auswahl: bAuswahl }[m]);
+    druecke([bBedienen, bStift, bRadierer], { bedienen: bBedienen, stift: bStift, radierer: bRadierer }[m]);
   }
   bBedienen.onclick = () => setzeModus('bedienen');
   bStift.onclick = () => setzeModus('stift');
   bRadierer.onclick = () => setzeModus('radierer');
-  bAuswahl.onclick = () => setzeModus('auswahl');
-  bLineal.onclick = () => { const an = !lineal.an; lineal.umschalten(an); bLineal.setAttribute('aria-pressed', an); };
-  function loescheAuswahl() {
-    if (!sel || !sel.s.length) return;
-    verlauf.push(JSON.stringify(eigen)); if (verlauf.length > 60) verlauf.shift();
-    eigen[sel.f.id] = (eigen[sel.f.id] || []).filter(s => !sel.s.includes(s));
-    sel = null; flaechen.forEach(zeichne); speichern(); meldeAuswahl();
-  }
-  bAuswLoe.onclick = loescheAuswahl;
-  addEventListener('keydown', e => { if (e.key === 'Delete' && sel && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName || '')) loescheAuswahl(); });
   farbKnoepfe.forEach(b => b.onclick = () => { farbe = b.farbe; druecke(farbKnoepfe, b); setzeModus('stift'); });
-  bZurueck.onclick = () => { beende(); sel = null; meldeAuswahl(); if (verlauf.length) { eigen = JSON.parse(verlauf.pop()); flaechen.forEach(zeichne); speichern(); } };
+  bZurueck.onclick = () => { beende(); if (verlauf.length) { eigen = JSON.parse(verlauf.pop()); flaechen.forEach(zeichne); speichern(); } };
   bLeeren.onclick = () => {
     beende();
     if (!confirm('Alle eigenen Anmerkungen und Notizen auf diesem Blatt löschen?')) return;
-    eigen = {}; sel = null; meldeAuswahl(); verlauf.length = 0; flaechen.forEach(zeichne);
+    eigen = {}; verlauf.length = 0; flaechen.forEach(zeichne);
     try { sessionStorage.removeItem(SCHLUESSEL); } catch { /* egal */ }
     melde('Anmerkungen gelöscht');
   };
@@ -754,7 +546,6 @@
     document.body.style.setProperty('--x', Math.max(0, (innerWidth - FB * k) / 2) + 'px');   // Folie waagerecht mittig, grauer Rand beidseitig
     stempel.textContent = MOTOR + ' · ' + innerWidth + '×' + innerHeight + ' · ' + Math.round(k * 100) + ' %';
     stempel.title = 'Motorversion · Fenstergröße · Maßstab der Folie';
-    lineal.neuBauen();
   }
   addEventListener('resize', skaliere);
 
