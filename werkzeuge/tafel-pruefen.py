@@ -68,7 +68,7 @@ async def main():
                             pr.append(f"Überschrift nicht größer als Text (h1 {r['h1']:.0f}, h2 {x['h2']}, Text {x['text']:.0f})")
                         if x['zelle'] is not None:
                             if abs(x['zelle'] - round(x['zelle'])) > .01: pr.append(f"Kästchen nicht ganzzahlig: {x['zelle']:.2f}")
-                            if x['spalten'] != 35: pr.append(f"Spaltenzahl {x['spalten']} statt 35")
+                            if not 6 <= x['spalten'] <= 35: pr.append(f"Spaltenzahl {x['spalten']} unzulässig")
                     try:
                         from PIL import Image
                         for el in await pg.locator('.panel:not([hidden]) svg.raster').all():

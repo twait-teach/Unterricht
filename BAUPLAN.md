@@ -151,3 +151,7 @@ Den Ordner `kern/` bei Inhaltsänderungen nicht mitschicken.
 - Schrittweises Einblenden: Kontrollkästchen (`Checkbox`) + `SetConditionToShowObject`; beim Speichern alle auf „aus“.
 - **Texte nicht mit `Text(...)` erzeugen**, sondern als freie Texte (`t="..."`) mit LaTeX-Schalter – sonst geht LaTeX nach dem Speichern verloren.
 - **Immer die gespeicherte Datei neu laden und dann prüfen**, nicht nur den Zustand direkt nach dem Bauen.
+
+## Musterlösungen bei Änderungen
+- Wird ein Blatt geändert, wird seine Musterlösung **gelöscht** (`<blatt>.loesung.js` durch eine leere Datei ersetzen), nie angepasst oder „gültig gehalten“. Der Lehrer schreibt sie danach neu und sichert sie.
+- Karofeld mit GeoGebra daneben: `<ab-karo geogebra="datei.ggb" spalten-tafel="16" hoehe="470" zeilen="10" zeilen-druck="12">` – links GeoGebra, rechts Karo (16 Kästchen breit); im Druck nur das Karo in voller Breite. GeoGebra-Datei für 832 × 470 bauen.

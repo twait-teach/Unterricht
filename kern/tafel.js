@@ -10,7 +10,7 @@
 { if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
-  const MOTOR = 'Motor 26.09.-11';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const MOTOR = 'Motor 26.09.-12';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
   const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
@@ -114,9 +114,18 @@
     },
     // Karofeld: zeilen="8" (ganze Kästchenzeilen; mehr Platz wird automatisch dazugegeben), zeilen-druck="10".
     // Altes verhaeltnis="2.3" wird in Zeilen umgerechnet. Einheitlich dünne Linien wie im Heft.
+    // Mit geogebra="datei.ggb": links GeoGebra, rechts das Karofeld (spalten-tafel="16" Kästchen breit); im Druck nur das Karofeld.
     karo(q) {
       const z = q.hasAttribute('zeilen') ? zahl(q.getAttribute('zeilen'), 8) : SPALTEN / zahl(q.getAttribute('verhaeltnis'), 2);
-      return rasterFlaeche(q, Math.max(2, Math.round(z)));
+      const f = rasterFlaeche(q, Math.max(2, Math.round(z)));
+      if (q.hasAttribute('geogebra')) {
+        f.tafelSpalten = Math.min(SPALTEN - 8, Math.max(6, Math.round(zahl(q.getAttribute('spalten-tafel'), 16))));
+        const g = ggbBox(q.getAttribute('geogebra'), null, zahl(q.getAttribute('hoehe'), 470));
+        g.el.classList.add('nur-tafel');
+        const reihe = el('div', 'reihe'); reihe.append(g.el, f.el);
+        f.panelEl = reihe; f.start = g.start;
+      }
+      return f;
     },
     linien(q) {
       const f = neueFlaeche(q, zahl(q.getAttribute('verhaeltnis'), 3));
@@ -151,22 +160,29 @@
     text: q => ({ el: el('div', 'textblock' + (q.getAttribute('stil') === 'loesung' ? ' loesung' : ''), q.innerHTML) }),
     // GeoGebra-Datei (Classic) eingebettet; lädt erst, wenn die Phase sichtbar ist. Braucht Internet (geogebra.org),
     // sonst erscheint ein Hinweis mit Link auf die Datei.
-    geogebra: q => {
-      const b = zahl(q.getAttribute('breite'), 1500), h = zahl(q.getAttribute('hoehe'), 520);
-      const box = el('div', 'ggb'), ziel = el('div');
-      box.style.width = b + 'px'; box.style.height = h + 'px'; box.append(ziel);
-      const datei = q.getAttribute('datei');
-      let gestartet = false;
-      const hinweis = () => { box.replaceChildren(); const a = el('a', null, 'GeoGebra nicht erreichbar – Datei öffnen'); a.href = datei; box.append(a); };
-      const start = () => {
-        if (gestartet) return; gestartet = true;
-        ggbLaden().then(() => new window.GGBApplet({ appName: 'classic', width: b, height: h, filename: datei, showToolBar: false, showMenuBar: false,
+    geogebra: q => ggbBox(q.getAttribute('datei'), zahl(q.getAttribute('breite'), 1500), zahl(q.getAttribute('hoehe'), 520)),
+  };
+  // GeoGebra-Datei (Classic) eingebettet; lädt erst, wenn die Phase sichtbar ist. Braucht Internet (geogebra.org),
+  // sonst erscheint ein Hinweis mit Link auf die Datei. breite = null: füllt den freien Platz (neben einem Karofeld).
+  function ggbBox(datei, breite, h) {
+    const box = el('div', 'ggb'), ziel = el('div');
+    if (breite) box.style.width = breite + 'px';
+    box.style.height = h + 'px'; box.append(ziel);
+    let gestartet = false;
+    const hinweis = () => { box.replaceChildren(); const a = el('a', null, 'GeoGebra nicht erreichbar – Datei öffnen'); a.href = datei; box.append(a); };
+    const start = () => {
+      if (gestartet) return; gestartet = true;
+      const los = (n = 0) => {
+        const b = breite || Math.floor(box.clientWidth);
+        if (!b && n < 40) return setTimeout(() => los(n + 1), 100);
+        ggbLaden().then(() => new window.GGBApplet({ appName: 'classic', width: b || 800, height: h, filename: datei, showToolBar: false, showMenuBar: false,
           showAlgebraInput: false, showResetIcon: false, enableRightClick: false, enableShiftDragZoom: false, enableLabelDrags: false, showFullscreenButton: false,
           useBrowserForJS: true, borderColor: 'none' }, true).inject(ziel)).catch(hinweis);
       };
-      return { el: box, start };
-    },
-  };
+      setTimeout(() => los(), 150);   // erst nach dem Einpassen (Breite steht dann fest)
+    };
+    return { el: box, start };
+  }
   let ggbSkript = null;
   const ggbLaden = () => ggbSkript ||= new Promise((ok, fehler) => {
     const sk = document.createElement('script'); sk.src = 'https://www.geogebra.org/apps/deployggb.js';
@@ -216,7 +232,7 @@
       if (q.getAttribute('tafel-titel') === 'nein') h2.classList.add('nur-druck');
       panel.append(h2);
     }
-    panel.append(teil.el); panel.start = teil.start;
+    panel.append(teil.panelEl || teil.el); panel.start = teil.start;
     if (q.getAttribute('nur')) panel.classList.add('nur-' + q.getAttribute('nur'));
     if (q.getAttribute('druckbreite')) panel.style.setProperty('--druckbreite', q.getAttribute('druckbreite'));
     else if (teil.raster) panel.style.setProperty('--druckbreite', '175mm');   // 35 Kästchen à 5 mm
@@ -482,6 +498,7 @@
     const tafel = document.body.classList.contains('tafelansicht');
     const raster = flaechen.filter(f => f.raster);
     for (const p of panels) p.style.removeProperty('--breite');
+    for (const f of raster) f.el.style.removeProperty('width');
     if (!tafel || !phasen.length) {
       for (const f of raster) { setzeZeilen(f, tafel ? f.min : f.druckZeilen, SPALTEN); zeichne(f); }
       return;
@@ -510,11 +527,11 @@
     c = Math.max(8, c);
     // Karoflächen: so viele ganze Kästchen nebeneinander, wie in die Breite passen (mindestens SPALTEN)
     const spalten = SPALTEN;   // Folie ist fest: immer genau SPALTEN Kästchen breit, wie im Druck
-    for (const p of panels) if (p.flaeche) p.style.setProperty('--breite', (p.flaeche.raster ? spalten : SPALTEN * p.anteil) * c + 'px');
-    for (const f of raster) setzeZeilen(f, f.min, spalten);
+    for (const p of panels) if (p.flaeche) if (!p.flaeche.tafelSpalten) p.style.setProperty('--breite', (p.flaeche.raster ? spalten : SPALTEN * p.anteil) * c + 'px');
+    for (const f of raster) { setzeZeilen(f, f.min, f.tafelSpalten || spalten); if (f.tafelSpalten) f.el.style.width = f.tafelSpalten * c + 'px'; }
     const d = daten.find(x => x[0] === phase)?.[1];
     const letzte = d?.ps.filter(p => p.flaeche?.raster).at(-1);
-    if (letzte) { const rest = Math.floor((d.H - d.fest - (d.feste + d.rasterZ) * c) / c); if (rest > 0) setzeZeilen(letzte.flaeche, letzte.flaeche.min + rest, spalten); }
+    if (letzte) { const rest = Math.floor((d.H - d.fest - (d.feste + d.rasterZ) * c) / c); if (rest > 0) setzeZeilen(letzte.flaeche, letzte.flaeche.min + rest, letzte.flaeche.tafelSpalten || spalten); }
     raster.forEach(zeichne);
   }
   document.fonts?.ready.then(() => requestAnimationFrame(einpassen));

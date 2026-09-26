@@ -102,3 +102,7 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 /* GeoGebra-Baustein */
 .ggb{flex:none;overflow:hidden;background:#fff}
 .ggb a{display:block;padding:1em;color:var(--aktiv)}
+.reihe{display:flex;gap:16px;align-items:flex-start;width:100%}
+.reihe .flaeche{flex:none}
+.reihe .ggb{flex:1;min-width:0}
+.druckansicht .reihe .flaeche{width:100%}
