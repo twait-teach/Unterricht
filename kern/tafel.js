@@ -10,7 +10,8 @@
 { if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
-  const MOTOR = 'Motor 26.09.-12';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const SKRIPT_V = ((document.currentScript && document.currentScript.src.match(/[?&]v=([^&]+)/)) || [0, ''])[1];   // Versionsnummer aus dem Script-Link; hängt sich an die GeoGebra-Datei, damit der Browser sie nicht veraltet aus dem Cache nimmt
+  const MOTOR = 'Motor 26.09.-13';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
   const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
@@ -175,7 +176,7 @@
       const los = (n = 0) => {
         const b = breite || Math.floor(box.clientWidth);
         if (!b && n < 40) return setTimeout(() => los(n + 1), 100);
-        ggbLaden().then(() => new window.GGBApplet({ appName: 'classic', width: b || 800, height: h, filename: datei, showToolBar: false, showMenuBar: false,
+        ggbLaden().then(() => new window.GGBApplet({ appName: 'classic', width: b || 800, height: h, filename: datei + (SKRIPT_V ? '?v=' + SKRIPT_V : ''), showToolBar: false, showMenuBar: false,
           showAlgebraInput: false, showResetIcon: false, enableRightClick: false, enableShiftDragZoom: false, enableLabelDrags: false, showFullscreenButton: false,
           useBrowserForJS: true, borderColor: 'none' }, true).inject(ziel)).catch(hinweis);
       };
