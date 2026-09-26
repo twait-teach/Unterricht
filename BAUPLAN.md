@@ -146,6 +146,7 @@ Den Ordner `kern/` bei Inhaltsänderungen nicht mitschicken.
 
 ## GeoGebra-Dateien
 - **Immer mit der Classic-App bauen** (mächtigste Web-App); der Grafikrechner kennt z. B. keine Vielecke/Strecken und lehnt solche Dateien ab.
+- Einbinden ins Blatt: `<ab-geogebra datei="name.ggb" phase="1" nur="tafel" breite="1500" hoehe="520">` (Größe in Folienpixeln). Die Datei wird beim ersten Anzeigen der Phase von geogebra.org geladen (Internet nötig; sonst Link zur Datei). Für die Größe 1500 × 520 bauen (`werkzeuge/geogebra/app.html`).
 - Werkzeug und Beispiel: `werkzeuge/geogebra/` (Befehlsdatei + `bauen.py`, baut per GeoGebra-Web-App in Chromium, speichert Screenshots und die `.ggb`).
 - Schrittweises Einblenden: Kontrollkästchen (`Checkbox`) + `SetConditionToShowObject`; beim Speichern alle auf „aus“.
 - **Texte nicht mit `Text(...)` erzeugen**, sondern als freie Texte (`t="..."`) mit LaTeX-Schalter – sonst geht LaTeX nach dem Speichern verloren.

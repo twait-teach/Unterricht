@@ -15,7 +15,7 @@ new GGBApplet({appName:"classic",width:1100,height:480,showToolBar:false,showAlg
 CMDS=open('anteil-befehle.txt',encoding='utf-8').read().strip().split('\n')
 async def main():
     async with async_playwright() as p:
-        b=await p.chromium.launch(args=['--enable-unsafe-swiftshader']); pg=await b.new_page(viewport={'width':1120,'height':500})
+        b=await p.chromium.launch(args=['--enable-unsafe-swiftshader']); pg=await b.new_page(viewport={'width':1520,'height':540})
         await pg.goto('http://127.0.0.1:8831/app.html')
         await pg.wait_for_function('window.ready===true',timeout=90000)
         for c in CMDS:
@@ -25,8 +25,8 @@ async def main():
         js='''() => {
           const set=(n,fn)=>{ let x=ggbApplet.getXML(n); x=fn(x); ggbApplet.evalXML(x); };
           const cbs=[['cbJan',20],['cbMia',52],['cbGanzes',84],['cbAnteil',116]];
-          for (const [n,y] of cbs) set(n,x=>x.replace('<checkbox fixed="true"/>','<checkbox fixed="true"/><absoluteScreenLocation x="830" y="'+y+'"/>'));
-          for (const [n,m] of [['tJan',1.8],['tMia',1.8],['tGanz',1.8],['tAnt',2.2]]) set(n,x=>x.includes('<font')?x.replace(/sizeM="[^"]*"/,'sizeM="'+m+'"'):x.replace(/<\/element>/,'<font serif="false" sizeM="'+m+'" size="0" style="0"/></element>'));
+          for (const [n,y] of cbs) set(n,x=>x.replace('<checkbox fixed="true"/>','<checkbox fixed="true"/><absoluteScreenLocation x="1150" y="'+y+'"/>'));
+          for (const [n,m] of [['tJan',2.4],['tMia',2.4],['tGanz',2.4],['tAnt',3.0]]) set(n,x=>x.includes('<font')?x.replace(/sizeM="[^"]*"/,'sizeM="'+m+'"'):x.replace(/<\/element>/,'<font serif="false" sizeM="'+m+'" size="0" style="0"/></element>'));
           const P={"tJan": [0.9, 2.75], "tMia": [7.3, 2.75], "tGanz": [4.6, 0.05], "tAnt": [3.6, -1.3]};
           for (const n in P) set(n,x=>x.replace(/<startPoint[^>]*\/>/,'').replace(/<\/element>/,'<startPoint x="'+P[n][0]+'" y="'+P[n][1]+'" z="1"/></element>'));
           set('tAnt',x=>x.replace('<element type="text"','<element type="text"').replace(/<\/element>/,'<isLaTeX val="true"/></element>'));

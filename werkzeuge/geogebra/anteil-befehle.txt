@@ -1,7 +1,7 @@
 ShowAxes(false)
 ShowGrid(false)
 SetPerspective("G")
-ZoomIn(-1,-3.2,19,3.6)
+ZoomIn(-1,-3.2,19,3.733)
 cbJan=Checkbox("Jan zahlt 4 €")
 cbMia=Checkbox("Mia zahlt 9 €")
 cbGanzes=Checkbox("Das Ganze")

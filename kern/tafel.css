@@ -98,3 +98,7 @@ h2{font-family:var(--serif);font-weight:normal;color:var(--ueberschrift);margin:
 
 /* Musterlösung */
 .leiste button:disabled{opacity:.45;cursor:not-allowed}
+
+/* GeoGebra-Baustein */
+.ggb{flex:none;overflow:hidden;background:#fff}
+.ggb a{display:block;padding:1em;color:var(--aktiv)}

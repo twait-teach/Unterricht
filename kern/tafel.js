@@ -10,7 +10,7 @@
 { if (!window.Zugang) { const z = document.createElement('script'); z.src = document.currentScript.src.replace(/[^/]*$/, 'zugang.js'); document.head.append(z); } } // Zugangsschutz sicherstellen
 (() => {
   const NS = 'http://www.w3.org/2000/svg';
-  const MOTOR = 'Motor 25.09.-10';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
+  const MOTOR = 'Motor 26.09.-11';   // Versionsstempel: in der Leiste sichtbar, damit klar ist, welche Datei der Browser lädt
   const FB = 1600, FH = 900;   // feste Folie (16:9) in logischen Pixeln; wird als Ganzes auf den Bildschirm skaliert
   const SPALTEN = 35;   // Kästchen je Blattbreite (im Druck 5 mm); alle Karo-Flächen eines Blatts haben dieselbe Kästchengröße
   const FARBEN = [['#174fa1', 'Blau'], ['#20773b', 'Grün'], ['#c32e2e', 'Rot'], ['#171717', 'Schwarz']];
@@ -149,7 +149,29 @@
     },
     merksatz: q => ({ el: el('div', 'merksatz', q.innerHTML) }),
     text: q => ({ el: el('div', 'textblock' + (q.getAttribute('stil') === 'loesung' ? ' loesung' : ''), q.innerHTML) }),
+    // GeoGebra-Datei (Classic) eingebettet; lädt erst, wenn die Phase sichtbar ist. Braucht Internet (geogebra.org),
+    // sonst erscheint ein Hinweis mit Link auf die Datei.
+    geogebra: q => {
+      const b = zahl(q.getAttribute('breite'), 1500), h = zahl(q.getAttribute('hoehe'), 520);
+      const box = el('div', 'ggb'), ziel = el('div');
+      box.style.width = b + 'px'; box.style.height = h + 'px'; box.append(ziel);
+      const datei = q.getAttribute('datei');
+      let gestartet = false;
+      const hinweis = () => { box.replaceChildren(); const a = el('a', null, 'GeoGebra nicht erreichbar – Datei öffnen'); a.href = datei; box.append(a); };
+      const start = () => {
+        if (gestartet) return; gestartet = true;
+        ggbLaden().then(() => new window.GGBApplet({ appName: 'classic', width: b, height: h, filename: datei, showToolBar: false, showMenuBar: false,
+          showAlgebraInput: false, showResetIcon: false, enableRightClick: false, enableShiftDragZoom: false, enableLabelDrags: false, showFullscreenButton: false,
+          useBrowserForJS: true, borderColor: 'none' }, true).inject(ziel)).catch(hinweis);
+      };
+      return { el: box, start };
+    },
   };
+  let ggbSkript = null;
+  const ggbLaden = () => ggbSkript ||= new Promise((ok, fehler) => {
+    const sk = document.createElement('script'); sk.src = 'https://www.geogebra.org/apps/deployggb.js';
+    sk.onload = ok; sk.onerror = fehler; document.head.append(sk); setTimeout(() => fehler(new Error('Zeitüberschreitung')), 20000);
+  });
 
   // ---------- Gerüst des Blatts ----------
   const phasenNamen = (blatt.getAttribute('phasen') || '').split('|').map(s => s.trim()).filter(Boolean);
@@ -194,7 +216,7 @@
       if (q.getAttribute('tafel-titel') === 'nein') h2.classList.add('nur-druck');
       panel.append(h2);
     }
-    panel.append(teil.el);
+    panel.append(teil.el); panel.start = teil.start;
     if (q.getAttribute('nur')) panel.classList.add('nur-' + q.getAttribute('nur'));
     if (q.getAttribute('druckbreite')) panel.style.setProperty('--druckbreite', q.getAttribute('druckbreite'));
     else if (teil.raster) panel.style.setProperty('--druckbreite', '175mm');   // 35 Kästchen à 5 mm
@@ -446,7 +468,7 @@
   let phase = null;
   function setzePhase(p) {
     beende(); phase = p; zeigeTitel(p);
-    for (const panel of panels) panel.hidden = panel.phasen.length > 0 && !panel.phasen.includes(p);
+    for (const panel of panels) { panel.hidden = panel.phasen.length > 0 && !panel.phasen.includes(p); if (!panel.hidden && document.body.classList.contains('tafelansicht')) panel.start?.(); }
     druecke(phasenKnoepfe, phasenKnoepfe.find(b => b.phase === p));
     requestAnimationFrame(einpassen);
   }
